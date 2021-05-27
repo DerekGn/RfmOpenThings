@@ -2,7 +2,8 @@
 {
     internal interface IOpenThingsService
     {
-        void StopListen();
         void StartListen();
+        void StartIdentify(uint sensorId);
+        void Stop();
     }
 }

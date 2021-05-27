@@ -50,41 +50,44 @@ namespace RfmOpenThings
 
             _serviceProvider = BuildServiceProvider();
 
+            var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
+            var logger = _serviceProvider.GetService<ILogger<Program>>();
+
             return Parser.Default.ParseArguments<IdentifyOptions, ListenOptions, OtaOptions>(args)
                 .MapResult(
-                (ListenOptions options) => ExecuteListen(options),
-                //(IdentifyOptions options) => ExecuteIdentify(options),
-                //(OtaOptions options) => ExecuteOta(options),
+                (ListenOptions options) => ExecuteOperation(options, () =>
+                {
+                    logger.LogInformation("Listening for OpenThings messages. Press any key to exit.");
+
+                    openThingsService.StartListen();
+
+                    Console.ReadKey(true);
+
+                    logger.LogInformation("Stopping listening for OpenThings messages");
+
+                    openThingsService.Stop();
+                }),
+                (IdentifyOptions options) => ExecuteOperation(options, () =>
+                {
+                    uint sensorId = options.SensorId.ConvertToUInt();
+
+                    logger.LogInformation($"Listening for OpenThings message from SensorId [0x{sensorId:X}]. Press any key to exit.");
+
+                    openThingsService.StartIdentify(sensorId);
+
+                    Console.ReadKey(true);
+
+                    logger.LogInformation("Stopping listening for OpenThings messages");
+
+                    openThingsService.Stop();
+                }),
+                (OtaOptions options) => ExecuteOperation(options, () =>
+                {
+                }),
                 errs => -1);
         }
 
-        //private static int ExecuteOperation()
-        //{
-        //    var logger = _serviceProvider.GetService<ILogger<Program>>();
-
-        //    var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
-
-
-        //}
-
-        //private static int ExecuteOta(OtaOptions options)
-        //{
-        //    var logger = _serviceProvider.GetService<ILogger<Program>>();
-
-        //    var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
-
-        //}
-
-        //private static int ExecuteIdentify(IdentifyOptions options)
-        //{
-        //    var logger = _serviceProvider.GetService<ILogger<Program>>();
-
-        //    var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
-
-
-        //}
-
-        private static int ExecuteListen(ListenOptions options)
+        private static int ExecuteOperation(BaseOptions options, Action operation)
         {
             var logger = _serviceProvider.GetService<ILogger<Program>>();
 
@@ -92,17 +95,17 @@ namespace RfmOpenThings
 
             rfmUsb.Open(options.SerialPort, options.BaudRate);
 
-            var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
-
-            logger.LogInformation($"{rfmUsb.Version} Listening for OpenThings messages. Press any key to exit");
+            logger.LogInformation(rfmUsb.Version);
 
             try
             {
-                openThingsService.StartListen();
+                operation();
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "An unexpected exception occurred");
 
-                Console.ReadKey(true);
-
-                openThingsService.StopListen();
+                return -1;
             }
             finally
             {

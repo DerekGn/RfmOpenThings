@@ -14,74 +14,92 @@ namespace RfmOpenThings
         private readonly IOpenThingsDecoder _openThingsDecoder;
         private readonly IOpenThingsEncoder _openThingsEncoder;
         private readonly ILogger<OpenThingsService> _logger;
+        private readonly List<PidMap> _pidMap;
         private readonly IRfmUsb _rfmUsb;
 
         private CancellationTokenSource _cancellationTokenSource;
         private Task _task;
 
-        public OpenThingsService(ILogger<OpenThingsService> logger, IRfmUsb rfmUsb, IOpenThingsDecoder openThingsDecoder, IOpenThingsEncoder openThingsEncoder)
+        public OpenThingsService(
+            ILogger<OpenThingsService> logger,
+            IRfmUsb rfmUsb,
+            IOpenThingsDecoder openThingsDecoder,
+            IOpenThingsEncoder openThingsEncoder)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _rfmUsb = rfmUsb ?? throw new ArgumentNullException(nameof(rfmUsb));
             _openThingsDecoder = openThingsDecoder ?? throw new ArgumentNullException(nameof(openThingsDecoder));
             _openThingsEncoder = openThingsEncoder ?? throw new ArgumentNullException(nameof(openThingsEncoder));
             InitaliseRfmUsb();
+
+            _pidMap = new List<PidMap>() { new PidMap(4, 242) };
         }
 
         public void StartListen()
         {
-            _cancellationTokenSource = new CancellationTokenSource();
-
-            _task = Task.Run(() => ExecuteOperation(() =>
+            StartOperation(() =>
             {
                 try
                 {
-                    Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), new List<PidMap>() { new PidMap(4, 242) });
-                    
-                    _logger.LogInformation(message.ToString());
+                    Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
+
+                    _logger.LogInformation($"Message Decoded {message}");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"An error occurred decoding OpenThings message");
+                    _logger.LogError($"Decoding OpenThings Message Failed. [{ex.Message}]");
                 }
-
-                
-
-            }, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+            });
         }
 
-        private void ExecuteOperation(Action operation, CancellationToken cancellationToken)
+        public void StartIdentify(uint sensorId)
         {
-            if (!cancellationToken.IsCancellationRequested)
+            StartOperation(() =>
             {
-                _rfmUsb.DioInterruptMask = DioIrq.Dio0;
-                _rfmUsb.Mode = Mode.Rx;
-
-                do
+                try
                 {
-                    if(cancellationToken.IsCancellationRequested)
-                    {
-                        return;
-                    }
+                    Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
 
-                    try
+                    if(message.Header.SensorId == sensorId)
                     {
-                        _rfmUsb.WaitForIrq();
-                    }
-                    catch (TimeoutException)
-                    {
-                    }
+                        _logger.LogInformation("Sending Identify Message");
 
-                    if ((_rfmUsb.Irq & Irq.PayloadReady) == Irq.PayloadReady)
-                    {
-                        _logger.LogInformation($"[Packet Received]");
-                        operation();
+                        //var messageHeader = new MessageHeader(
+                        //    message.Header.ManufacturerId,
+                        //    message.Header.ProductId,
+                        //    0,
+                        //    message.Header.SensorId);
+
+                        //var message = new Message(messageHeader);
                     }
-                } while (true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Decoding OpenThings Message Failed. [{ex.Message}]");
+                }
+            });
+        }
+
+        public void Stop()
+        {
+            StopRunningTask();
+        }
+
+        private void StartOperation(Action operation)
+        {
+            if (_task == null)
+            {
+                _cancellationTokenSource = new CancellationTokenSource();
+
+                _task = Task.Run(() => ExecuteOperation(operation, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+            }
+            else
+            {
+                throw new InvalidOperationException("Service busy");
             }
         }
 
-        public void StopListen()
+        private void StopRunningTask()
         {
             if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
             {
@@ -90,6 +108,8 @@ namespace RfmOpenThings
                 Task.WaitAll(_task);
 
                 _cancellationTokenSource = null;
+
+                _task = null;
             }
         }
 
@@ -114,6 +134,36 @@ namespace RfmOpenThings
             _rfmUsb.CrcAutoClear = false;
             _rfmUsb.AddressFiltering = AddressFilter.None;
             _rfmUsb.PayloadLength = 66;
+        }
+
+        private void ExecuteOperation(Action operation, CancellationToken cancellationToken)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _rfmUsb.DioInterruptMask = DioIrq.Dio0;
+                _rfmUsb.Mode = Mode.Rx;
+
+                do
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        _rfmUsb.WaitForIrq();
+                    }
+                    catch (TimeoutException)
+                    {
+                    }
+
+                    if ((_rfmUsb.Irq & Irq.PayloadReady) == Irq.PayloadReady)
+                    {
+                        operation();
+                    }
+                } while (true);
+            }
         }
     }
 }
