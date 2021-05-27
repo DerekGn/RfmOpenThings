@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RfmOpenThings": {
+      "commandName": "Project",
+      "commandLineArgs": "listen -s COM3"
+    }
+  }
+}
