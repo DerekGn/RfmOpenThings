@@ -1,19 +1,41 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+variables:
+- name: BuildParameters.Solution
+  value: '**\*.sln'
+- name: BuildParameters.Version
+  value: $(Major).$(Minor).$(Patch).0
+
+name: v$(Major).$(Minor).$(Patch).0
 
 trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: windows-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  - task: DotNetCoreCLI@2
+    displayName: "Build Solution"
+    inputs:
+      command: 'build'
+      projects: $(BuildParameters.Solution)
+      configuration: $(BuildConfiguration)
+      arguments: /p:AssemblyVersion=$(BuildParameters.Version)
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      zipAfterPublish: true
+      projects: '**\*.csproj'
+      arguments: '/p:AssemblyVersion=$(BuildParameters.Version) /p:AssemblyInformationalVersion=$(BuildParameters.Version) -o $(Build.ArtifactStagingDirectory)'
+  - task: GitHubRelease@1
+    displayName: "Publish Relase To GitHub"
+    inputs:
+      gitHubConnection: 'GitHub PAT'
+      repositoryName: '$(Build.Repository.Name)'
+      action: 'create'
+      target: '$(Build.SourceVersion)'
+      tagSource: 'userSpecifiedTag'
+      tag: '$(Build.BuildNumber)'
+      title: '$(Build.BuildNumber) - $(BuildConfiguration) - $(Build.SourceBranchName)'
+      changeLogCompareToRelease: 'lastFullRelease'
+      changeLogType: 'commitBased'
