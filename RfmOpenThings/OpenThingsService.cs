@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenThings;
+using RfmOta;
 using RfmUsb;
+using RfmUsb.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +18,7 @@ namespace RfmOpenThings
         private readonly IOpenThingsDecoder _openThingsDecoder;
         private readonly IOpenThingsEncoder _openThingsEncoder;
         private readonly ILogger<OpenThingsService> _logger;
+        private readonly IOtaService _otaService;
         private readonly List<PidMap> _pidMap;
         private readonly List<PipMap> _pipMap;
         private readonly IRfmUsb _rfmUsb;
@@ -27,11 +31,13 @@ namespace RfmOpenThings
             ILogger<OpenThingsService> logger,
             IConfiguration configuration,
             IRfmUsb rfmUsb,
+            IOtaService otaService,
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _rfmUsb = rfmUsb ?? throw new ArgumentNullException(nameof(rfmUsb));
+            _otaService = otaService ?? throw new ArgumentNullException(nameof(otaService));
             _openThingsDecoder = openThingsDecoder ?? throw new ArgumentNullException(nameof(openThingsDecoder));
             _openThingsEncoder = openThingsEncoder ?? throw new ArgumentNullException(nameof(openThingsEncoder));
 
@@ -49,75 +55,74 @@ namespace RfmOpenThings
 
         public void StartListen()
         {
-            StartOperation(() =>
+            StartOperation((message) =>
             {
-                try
-                {
-                    Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
-
-                    _logger.LogInformation($"Message Decoded {message}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Decoding OpenThings Message Failed. [{ex.Message}]");
-                }
+                _logger.LogInformation($"Message Decoded {message}");
             });
         }
 
         public void StartIdentify(uint sensorId)
         {
-            StartOperation(() =>
+            StartOperation((message) =>
             {
-                try
+                if (message.Header.SensorId == sensorId)
                 {
-                    Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
+                    var pip = _pipMap.FirstOrDefault(_ => _.ManufacturerId == message.Header.ManufacturerId);
 
-                    if (message.Header.SensorId == sensorId)
-                    {
-                        var pip = _pipMap.FirstOrDefault(_ => _.ManufacturerId == message.Header.ManufacturerId);
+                    _logger.LogInformation("Sending Identify Message");
 
-                        _logger.LogInformation("Sending Identify Message");
-
-                        var messageHeader = new MessageHeader(
-                            message.Header.ManufacturerId,
-                            message.Header.ProductId,
-                            0,
-                            message.Header.SensorId);
-
-                        var identifyMessage = new Message(messageHeader);
-
-                        var identifyParameter = new Parameter(OpenThingsParameter.IdentifyCommand);
-                        var identifyData = new MessageRecordDataInt(RecordType.SignedX0, 0, 0);
-                        var identifyRecord = new MessageRecord(identifyParameter, identifyData);
-                        identifyMessage.Records.Add(identifyRecord);
-
-                        List<Byte> encodedMessageBytes;
-
-                        if (pip == null)
-                        {
-                            encodedMessageBytes = _openThingsEncoder.Encode(identifyMessage, pip.Pip, (ushort)_random.Next(ushort.MaxValue)).ToList();
-                        }
-                        else
-                        {
-                            encodedMessageBytes = _openThingsEncoder.Encode(identifyMessage).ToList();
-                        }
-
-                        _rfmUsb.Mode = Mode.Standby;
-
-                        _rfmUsb.Transmit(encodedMessageBytes);
-
-                        _rfmUsb.Mode = Mode.Rx;
-                    }
+                    TransmitMessage(
+                        EncodeMessage(
+                            CreateMessage(
+                                message.Header,
+                                OpenThingsParameter.IdentifyCommand,
+                                new MessageRecordDataInt(RecordType.SignedX0, 0, 0))));
                 }
-                catch (Exception ex)
+            });
+        }
+
+        public void StartIntervalUpdate(uint sensorId, uint interval, int outputPower)
+        {
+            StartOperation((message) =>
+            {
+                if (message.Header.SensorId == sensorId)
                 {
-                    _logger.LogError($"Decoding OpenThings Message Failed. [{ex.Message}]");
+                    _rfmUsb.OutputPower = outputPower;
+
+                    TransmitMessage(
+                        EncodeMessage(
+                            CreateMessage(
+                                message.Header,
+                                (OpenThingsParameter)((int)OpenThingsParameter.ReportPeriod | 0x80),
+                                new MessageRecordDataUInt(RecordType.SignedX0, sizeof(UInt32), interval))));
                 }
             });
         }
 
         public void StartOtaUpdate(uint sensorId, int outputPower, string hexFile)
         {
+            StartOperation((message) =>
+            {
+                if (File.Exists(hexFile) && (message.Header.SensorId == sensorId))
+                {
+                    _rfmUsb.OutputPower = outputPower;
+
+                    TransmitMessage(
+                        EncodeMessage(
+                            CreateMessage(
+                                message.Header,
+                                (OpenThingsParameter)((int)OpenThingsParameter.ReportPeriod | 0x80),
+                                new MessageRecordDataInt(RecordType.SignedX0, 0, 0))));
+
+                    Thread.Sleep(1000);
+
+                    OtaUpdate(hexFile);
+                }
+                else
+                {
+                    _logger.LogWarning($"Unable to find hex file [{hexFile}]");
+                }
+            });
         }
 
         public void Stop()
@@ -125,7 +130,7 @@ namespace RfmOpenThings
             StopRunningTask();
         }
 
-        private void StartOperation(Action operation)
+        private void StartOperation(Action<Message> operation)
         {
             if (_task == null)
             {
@@ -176,7 +181,7 @@ namespace RfmOpenThings
             _rfmUsb.PayloadLength = 66;
         }
 
-        private void ExecuteOperation(Action operation, CancellationToken cancellationToken)
+        private void ExecuteOperation(Action<Message> operation, CancellationToken cancellationToken)
         {
             if (!cancellationToken.IsCancellationRequested)
             {
@@ -200,9 +205,98 @@ namespace RfmOpenThings
 
                     if ((_rfmUsb.Irq & Irq.PayloadReady) == Irq.PayloadReady)
                     {
-                        operation();
+
+                        try
+                        {
+                            Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
+
+                            _logger.LogInformation($"Message Decoded {message}");
+
+                            operation(message);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Decoding OpenThings Message Failed. [{ex.Message}]");
+                        }
                     }
                 } while (true);
+            }
+        }
+
+        private void TransmitMessage(IList<byte> bytes)
+        {
+            _rfmUsb.Mode = Mode.Standby;
+
+            _rfmUsb.Transmit(bytes);
+
+            _rfmUsb.Mode = Mode.Rx;
+        }
+
+        private Message CreateMessage(MessageHeader messageHeader, OpenThingsParameter openThingsParameter, BaseMessageRecordData messageData)
+        {
+            var identifyHeader = new MessageHeader(
+                        messageHeader.ManufacturerId,
+                        messageHeader.ProductId,
+                        0,
+                        messageHeader.SensorId);
+
+            var message = new Message(identifyHeader);
+
+            var parameter = new Parameter(openThingsParameter);
+            var record = new MessageRecord(parameter, messageData);
+            message.Records.Add(record);
+
+            return message;
+        }
+
+        private IList<byte> EncodeMessage(Message requestMessage)
+        {
+            var pip = _pipMap.FirstOrDefault(_ => _.ManufacturerId == requestMessage.Header.ManufacturerId);
+
+            List<Byte> encodedMessage;
+
+            if (pip == null)
+            {
+                encodedMessage = _openThingsEncoder.Encode(requestMessage, pip.Pip, (ushort)_random.Next(ushort.MaxValue)).ToList();
+            }
+            else
+            {
+                encodedMessage = _openThingsEncoder.Encode(requestMessage).ToList();
+            }
+
+            return encodedMessage;
+        }
+
+        private void OtaUpdate(string hexFile)
+        {
+            try
+            {
+                using var stream = File.OpenRead(hexFile);
+
+                if (_otaService.OtaUpdate(stream, out uint crc))
+                {
+                    _logger.LogInformation($"OTA flash update completed. Crc: [0x{crc:X}]");
+                }
+                else
+                {
+                    _logger.LogWarning("OTA flash update failed");
+                }
+            }
+            catch (RfmUsbSerialPortNotFoundException ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            catch (RfmUsbCommandExecutionException ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            catch (FileNotFoundException)
+            {
+                _logger.LogError($"Unable to find file: [{hexFile}]");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unhandled exception occurred");
             }
         }
     }

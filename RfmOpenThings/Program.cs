@@ -59,12 +59,6 @@ namespace RfmOpenThings
                     logger.LogInformation("Listening for OpenThings messages. Press any key to exit.");
 
                     openThingsService.StartListen();
-
-                    Console.ReadKey(true);
-
-                    logger.LogInformation("Stopping listening for OpenThings messages");
-
-                    openThingsService.Stop();
                 }),
                 (IdentifyOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
@@ -73,15 +67,15 @@ namespace RfmOpenThings
                     logger.LogInformation($"Listening for OpenThings message from SensorId [0x{sensorId:X}]. Press any key to exit.");
 
                     openThingsService.StartIdentify(sensorId);
-
-                    Console.ReadKey(true);
-
-                    logger.LogInformation("Stopping listening for OpenThings messages");
-
-                    openThingsService.Stop();
                 }),
-                (IdentifyOptions options) => ExecuteOperation(options, (openThingsService) =>
+                (IntervalOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
+                    uint sensorId = options.SensorId.ConvertToUInt();
+                    uint interval = options.Interval.ConvertToUInt();
+
+                    logger.LogInformation($"Listening for an OpenThings message from SensorId [0x{sensorId:X}] Updating Interval To [0x{interval}:X]. Press any key to exit.");
+
+                    openThingsService.StartIntervalUpdate(sensorId, interval, options.OutputPower);
                 }),
                 (OtaOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
@@ -90,12 +84,6 @@ namespace RfmOpenThings
                     logger.LogInformation($"Listening for an OpenThings message from SensorId [0x{sensorId:X}]. Press any key to exit.");
 
                     openThingsService.StartOtaUpdate(sensorId, options.OutputPower, options.HexFile);
-
-                    Console.ReadKey(true);
-
-                    logger.LogInformation("Stopping listening for OpenThings messages");
-
-                    openThingsService.Stop();
                 }),
                 errs => -1);
         }
@@ -107,7 +95,7 @@ namespace RfmOpenThings
             var rfmUsb = _serviceProvider.GetService<IRfmUsb>();
 
             rfmUsb.Open(options.SerialPort, options.BaudRate);
-            
+
             var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
 
             logger.LogInformation(rfmUsb.Version);
@@ -115,6 +103,12 @@ namespace RfmOpenThings
             try
             {
                 operation(openThingsService);
+
+                Console.ReadKey(true);
+
+                logger.LogInformation("Stopping listening for OpenThings messages");
+
+                openThingsService.Stop();
             }
             catch (Exception ex)
             {
