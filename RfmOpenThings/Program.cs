@@ -50,12 +50,11 @@ namespace RfmOpenThings
 
             _serviceProvider = BuildServiceProvider();
 
-            var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
             var logger = _serviceProvider.GetService<ILogger<Program>>();
 
             return Parser.Default.ParseArguments<IdentifyOptions, ListenOptions, OtaOptions>(args)
                 .MapResult(
-                (ListenOptions options) => ExecuteOperation(options, () =>
+                (ListenOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
                     logger.LogInformation("Listening for OpenThings messages. Press any key to exit.");
 
@@ -67,7 +66,7 @@ namespace RfmOpenThings
 
                     openThingsService.Stop();
                 }),
-                (IdentifyOptions options) => ExecuteOperation(options, () =>
+                (IdentifyOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
                     uint sensorId = options.SensorId.ConvertToUInt();
 
@@ -81,25 +80,30 @@ namespace RfmOpenThings
 
                     openThingsService.Stop();
                 }),
-                (OtaOptions options) => ExecuteOperation(options, () =>
+                (OtaOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
+                    uint sensorId = options.SensorId.ConvertToUInt();
+
+                    logger.LogInformation($"Listening for an OpenThings message from SensorId [0x{sensorId:X}]. Press any key to exit.");
                 }),
                 errs => -1);
         }
 
-        private static int ExecuteOperation(BaseOptions options, Action operation)
+        private static int ExecuteOperation(BaseOptions options, Action<IOpenThingsService> operation)
         {
             var logger = _serviceProvider.GetService<ILogger<Program>>();
 
             var rfmUsb = _serviceProvider.GetService<IRfmUsb>();
 
             rfmUsb.Open(options.SerialPort, options.BaudRate);
+            
+            var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
 
             logger.LogInformation(rfmUsb.Version);
 
             try
             {
-                operation();
+                operation(openThingsService);
             }
             catch (Exception ex)
             {

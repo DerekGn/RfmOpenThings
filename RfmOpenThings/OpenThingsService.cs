@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenThings;
 using RfmUsb;
 using System;
@@ -15,13 +16,16 @@ namespace RfmOpenThings
         private readonly IOpenThingsEncoder _openThingsEncoder;
         private readonly ILogger<OpenThingsService> _logger;
         private readonly List<PidMap> _pidMap;
+        private readonly List<PipMap> _pipMap;
         private readonly IRfmUsb _rfmUsb;
+        private readonly Random _random;
 
         private CancellationTokenSource _cancellationTokenSource;
         private Task _task;
 
         public OpenThingsService(
             ILogger<OpenThingsService> logger,
+            IConfiguration configuration,
             IRfmUsb rfmUsb,
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder)
@@ -30,9 +34,17 @@ namespace RfmOpenThings
             _rfmUsb = rfmUsb ?? throw new ArgumentNullException(nameof(rfmUsb));
             _openThingsDecoder = openThingsDecoder ?? throw new ArgumentNullException(nameof(openThingsDecoder));
             _openThingsEncoder = openThingsEncoder ?? throw new ArgumentNullException(nameof(openThingsEncoder));
+
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+
             InitaliseRfmUsb();
 
-            _pidMap = new List<PidMap>() { new PidMap(4, 242) };
+            _pidMap = configuration.GetSection(nameof(PidMap)).Get<List<PidMap>>();
+            _pipMap = configuration.GetSection(nameof(PipMap)).Get<List<PipMap>>();
+            _random = new Random();
         }
 
         public void StartListen()
@@ -60,17 +72,41 @@ namespace RfmOpenThings
                 {
                     Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
 
-                    if(message.Header.SensorId == sensorId)
+                    if (message.Header.SensorId == sensorId)
                     {
+                        var pip = _pipMap.FirstOrDefault(_ => _.ManufacturerId == message.Header.ManufacturerId);
+
                         _logger.LogInformation("Sending Identify Message");
 
-                        //var messageHeader = new MessageHeader(
-                        //    message.Header.ManufacturerId,
-                        //    message.Header.ProductId,
-                        //    0,
-                        //    message.Header.SensorId);
+                        var messageHeader = new MessageHeader(
+                            message.Header.ManufacturerId,
+                            message.Header.ProductId,
+                            0,
+                            message.Header.SensorId);
 
-                        //var message = new Message(messageHeader);
+                        var identifyMessage = new Message(messageHeader);
+
+                        var identifyParameter = new Parameter(OpenThingsParameter.IdentifyCommand);
+                        var identifyData = new MessageRecordDataInt(RecordType.SignedX0, 0, 0);
+                        var identifyRecord = new MessageRecord(identifyParameter, identifyData);
+                        identifyMessage.Records.Add(identifyRecord);
+
+                        List<Byte> encodedMessageBytes;
+
+                        if (pip == null)
+                        {
+                            encodedMessageBytes = _openThingsEncoder.Encode(identifyMessage, pip.Pip, (ushort)_random.Next(ushort.MaxValue)).ToList();
+                        }
+                        else
+                        {
+                            encodedMessageBytes = _openThingsEncoder.Encode(identifyMessage).ToList();
+                        }
+
+                        _rfmUsb.Mode = Mode.Standby;
+
+                        _rfmUsb.Transmit(encodedMessageBytes);
+
+                        _rfmUsb.Mode = Mode.Rx;
                     }
                 }
                 catch (Exception ex)
