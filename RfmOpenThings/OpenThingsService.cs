@@ -116,6 +116,10 @@ namespace RfmOpenThings
             });
         }
 
+        public void StartOtaUpdate(uint sensorId, int outputPower, string hexFile)
+        {
+        }
+
         public void Stop()
         {
             StopRunningTask();

@@ -52,7 +52,7 @@ namespace RfmOpenThings
 
             var logger = _serviceProvider.GetService<ILogger<Program>>();
 
-            return Parser.Default.ParseArguments<IdentifyOptions, ListenOptions, OtaOptions>(args)
+            return Parser.Default.ParseArguments<IdentifyOptions, ListenOptions, OtaOptions, IntervalOptions>(args)
                 .MapResult(
                 (ListenOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
@@ -80,11 +80,22 @@ namespace RfmOpenThings
 
                     openThingsService.Stop();
                 }),
+                (IdentifyOptions options) => ExecuteOperation(options, (openThingsService) =>
+                {
+                }),
                 (OtaOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
                     uint sensorId = options.SensorId.ConvertToUInt();
 
                     logger.LogInformation($"Listening for an OpenThings message from SensorId [0x{sensorId:X}]. Press any key to exit.");
+
+                    openThingsService.StartOtaUpdate(sensorId, options.OutputPower, options.HexFile);
+
+                    Console.ReadKey(true);
+
+                    logger.LogInformation("Stopping listening for OpenThings messages");
+
+                    openThingsService.Stop();
                 }),
                 errs => -1);
         }

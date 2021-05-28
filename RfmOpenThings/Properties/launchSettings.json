@@ -2,7 +2,7 @@
   "profiles": {
     "RfmOpenThings": {
       "commandName": "Project",
-      "commandLineArgs": "identify -s COM3 -i 0x100"
+      "commandLineArgs": "interval -s COM3"
     }
   }
 }
