@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RfmOpenThings": {
+      "commandName": "Project",
+      "commandLineArgs": "interval -s COM3"
+    }
+  }
+}
