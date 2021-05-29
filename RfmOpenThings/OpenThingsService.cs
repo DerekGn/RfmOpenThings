@@ -273,14 +273,14 @@ namespace RfmOpenThings
             {
                 using var stream = File.OpenRead(hexFile);
 
-                if (_otaService.OtaUpdate(stream, out uint crc))
-                {
-                    _logger.LogInformation($"OTA flash update completed. Crc: [0x{crc:X}]");
-                }
-                else
-                {
-                    _logger.LogWarning("OTA flash update failed");
-                }
+                //if (_otaService.OtaUpdate(stream, out uint crc))
+                //{
+                //    _logger.LogInformation($"OTA flash update completed. Crc: [0x{crc:X}]");
+                //}
+                //else
+                //{
+                //    _logger.LogWarning("OTA flash update failed");
+                //}
             }
             catch (RfmUsbSerialPortNotFoundException ex)
             {
