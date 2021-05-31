@@ -27,6 +27,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenThings;
+using RfmOta;
 using RfmUsb;
 using Serilog;
 using System;
@@ -70,15 +71,19 @@ namespace RfmOpenThings
                 }),
                 (IntervalOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
+                    options.ValidateOutputPower();
+
                     uint sensorId = options.SensorId.ConvertToUInt();
                     uint interval = options.Interval.ConvertToUInt();
 
                     logger.LogInformation($"Listening for an OpenThings message from SensorId [0x{sensorId:X}] Updating Interval To [0x{interval}:X]. Press any key to exit.");
 
-                    openThingsService.StartIntervalUpdate(sensorId, interval, options.OutputPower);
+                    openThingsService.StartIntervalUpdate(sensorId, options.OutputPower, interval);
                 }),
                 (OtaOptions options) => ExecuteOperation(options, (openThingsService) =>
                 {
+                    options.ValidateOutputPower();
+
                     uint sensorId = options.SensorId.ConvertToUInt();
 
                     logger.LogInformation($"Listening for an OpenThings message from SensorId [0x{sensorId:X}]. Press any key to exit.");
@@ -90,11 +95,15 @@ namespace RfmOpenThings
 
         private static int ExecuteOperation(BaseOptions options, Action<IOpenThingsService> operation)
         {
+            int result = -1;
+
             var logger = _serviceProvider.GetService<ILogger<Program>>();
 
             var rfmUsb = _serviceProvider.GetService<IRfmUsb>();
 
             rfmUsb.Open(options.SerialPort, options.BaudRate);
+
+            rfmUsb.Timeout = 10000;
 
             var openThingsService = _serviceProvider.GetService<IOpenThingsService>();
 
@@ -108,20 +117,29 @@ namespace RfmOpenThings
 
                 logger.LogInformation("Stopping listening for OpenThings messages");
 
-                openThingsService.Stop();
+                var stopResult = openThingsService.Stop();
+
+                if (stopResult == OperationResult.Failed)
+                {
+                    result = -1;
+                }
+                else
+                {
+                    result = 0;
+                }
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "An unexpected exception occurred");
 
-                return -1;
+                result = -1;
             }
             finally
             {
                 rfmUsb.Close();
             }
 
-            return 0;
+            return result;
         }
 
         private static ServiceProvider BuildServiceProvider()
@@ -131,7 +149,8 @@ namespace RfmOpenThings
                 .AddSingleton(_configuration)
                 .AddLogging()
                 .AddOpenThings()
-                .AddOpenThingsService();
+                .AddOpenThingsService()
+                .AddOta();
 
             return serviceCollection.BuildServiceProvider();
         }

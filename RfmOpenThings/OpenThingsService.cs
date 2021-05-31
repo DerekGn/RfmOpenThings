@@ -25,7 +25,7 @@ namespace RfmOpenThings
         private readonly Random _random;
 
         private CancellationTokenSource _cancellationTokenSource;
-        private Task _task;
+        private Task<OperationResult> _task;
 
         public OpenThingsService(
             ILogger<OpenThingsService> logger,
@@ -58,6 +58,8 @@ namespace RfmOpenThings
             StartOperation((message) =>
             {
                 _logger.LogInformation($"Message Decoded {message}");
+
+                return OperationResult.Continue;
             });
         }
 
@@ -78,10 +80,12 @@ namespace RfmOpenThings
                                 OpenThingsParameter.IdentifyCommand,
                                 new MessageRecordDataInt(RecordType.SignedX0, 0, 0))));
                 }
+
+                return OperationResult.Continue;
             });
         }
 
-        public void StartIntervalUpdate(uint sensorId, uint interval, int outputPower)
+        public void StartIntervalUpdate(uint sensorId, int outputPower, uint interval)
         {
             StartOperation((message) =>
             {
@@ -95,7 +99,11 @@ namespace RfmOpenThings
                                 message.Header,
                                 (OpenThingsParameter)((int)OpenThingsParameter.ReportPeriod | 0x80),
                                 new MessageRecordDataUInt(RecordType.SignedX0, sizeof(UInt32), interval))));
+
+                    return OperationResult.Complete;
                 }
+
+                return OperationResult.Continue;
             });
         }
 
@@ -103,9 +111,18 @@ namespace RfmOpenThings
         {
             StartOperation((message) =>
             {
-                if (File.Exists(hexFile) && (message.Header.SensorId == sensorId))
+                if (!File.Exists(hexFile))
+                {
+                    _logger.LogWarning($"Unable to find hex file [{hexFile}]");
+
+                    return OperationResult.Failed;
+                }
+
+                if (message.Header.SensorId == sensorId)
                 {
                     _rfmUsb.OutputPower = outputPower;
+
+                    _rfmUsb.Mode = Mode.Standby;
 
                     TransmitMessage(
                         EncodeMessage(
@@ -116,21 +133,26 @@ namespace RfmOpenThings
 
                     Thread.Sleep(1000);
 
-                    OtaUpdate(hexFile);
+                    if (OtaUpdate(outputPower, hexFile))
+                    {
+                        return OperationResult.Complete;
+                    }
+                    else
+                    {
+                        return OperationResult.Failed;
+                    }
                 }
-                else
-                {
-                    _logger.LogWarning($"Unable to find hex file [{hexFile}]");
-                }
+
+                return OperationResult.Continue;
             });
         }
 
-        public void Stop()
+        public OperationResult Stop()
         {
-            StopRunningTask();
+            return StopRunningTask();
         }
 
-        private void StartOperation(Action<Message> operation)
+        private void StartOperation(Func<Message, OperationResult> operation)
         {
             if (_task == null)
             {
@@ -144,18 +166,29 @@ namespace RfmOpenThings
             }
         }
 
-        private void StopRunningTask()
+        private OperationResult StopRunningTask()
         {
+            OperationResult result = OperationResult.Cancelled;
+
             if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
             {
                 _cancellationTokenSource.Cancel();
 
-                Task.WaitAll(_task);
+                try
+                {
+                    Task.WaitAll(_task);
 
-                _cancellationTokenSource = null;
+                    result = _task.Result;
+                }
+                finally
+                {
+                    _cancellationTokenSource = null;
 
-                _task = null;
+                    _task = null;
+                }
             }
+
+            return result;
         }
 
         private void InitaliseRfmUsb()
@@ -179,10 +212,14 @@ namespace RfmOpenThings
             _rfmUsb.CrcAutoClear = false;
             _rfmUsb.AddressFiltering = AddressFilter.None;
             _rfmUsb.PayloadLength = 66;
+            _rfmUsb.TxStartCondition = true;
         }
 
-        private void ExecuteOperation(Action<Message> operation, CancellationToken cancellationToken)
+        private OperationResult ExecuteOperation(
+            Func<Message, OperationResult> operation, CancellationToken cancellationToken)
         {
+            OperationResult result = OperationResult.Cancelled;
+
             if (!cancellationToken.IsCancellationRequested)
             {
                 _rfmUsb.DioInterruptMask = DioIrq.Dio0;
@@ -192,7 +229,7 @@ namespace RfmOpenThings
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        return;
+                        break;
                     }
 
                     try
@@ -205,6 +242,7 @@ namespace RfmOpenThings
 
                     if ((_rfmUsb.Irq & Irq.PayloadReady) == Irq.PayloadReady)
                     {
+                        _rfmUsb.Mode = Mode.Standby;
 
                         try
                         {
@@ -212,27 +250,35 @@ namespace RfmOpenThings
 
                             _logger.LogInformation($"Message Decoded {message}");
 
-                            operation(message);
+                            result = operation(message);
+
+                            if (result != OperationResult.Continue)
+                            {
+                                break;
+                            }
                         }
                         catch (Exception ex)
                         {
                             _logger.LogError($"Decoding OpenThings Message Failed. [{ex.Message}]");
                         }
+
+                        _rfmUsb.Mode = Mode.Rx;
                     }
                 } while (true);
             }
+
+            return result;
         }
 
         private void TransmitMessage(IList<byte> bytes)
         {
-            _rfmUsb.Mode = Mode.Standby;
-
             _rfmUsb.Transmit(bytes);
-
-            _rfmUsb.Mode = Mode.Rx;
         }
 
-        private Message CreateMessage(MessageHeader messageHeader, OpenThingsParameter openThingsParameter, BaseMessageRecordData messageData)
+        private Message CreateMessage(
+            MessageHeader messageHeader,
+            OpenThingsParameter openThingsParameter,
+            BaseMessageRecordData messageData)
         {
             var identifyHeader = new MessageHeader(
                         messageHeader.ManufacturerId,
@@ -267,19 +313,23 @@ namespace RfmOpenThings
             return encodedMessage;
         }
 
-        private void OtaUpdate(string hexFile)
+        private bool OtaUpdate(int outputPower, string hexFile)
         {
             try
             {
                 using var stream = File.OpenRead(hexFile);
 
-                if (_otaService.OtaUpdate(stream, out uint crc))
+                if (_otaService.OtaUpdate(outputPower, stream, out uint crc))
                 {
                     _logger.LogInformation($"OTA flash update completed. Crc: [0x{crc:X}]");
+
+                    return true;
                 }
                 else
                 {
                     _logger.LogWarning("OTA flash update failed");
+
+                    return false;
                 }
             }
             catch (RfmUsbSerialPortNotFoundException ex)
@@ -298,6 +348,8 @@ namespace RfmOpenThings
             {
                 _logger.LogError(ex, "An unhandled exception occurred");
             }
+
+            return false;
         }
     }
 }
