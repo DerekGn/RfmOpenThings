@@ -23,6 +23,7 @@
 */
 
 using CommandLine;
+using System;
 
 namespace RfmOpenThings
 {
@@ -36,5 +37,11 @@ namespace RfmOpenThings
 
         [Option('p', "outputpower", Required = false, Default = 2, HelpText = "The output power of the RfmUsb in db")]
         public int OutputPower { get; set; }
+
+        public void ValidateOutputPower()
+        {
+            if (OutputPower < -2 || OutputPower > 20)
+                throw new ArgumentOutOfRangeException(nameof(OutputPower), "Must be between -2 and 20");
+        }
     }
 }
