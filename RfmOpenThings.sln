@@ -5,10 +5,6 @@ VisualStudioVersion = 16.0.31105.61
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RfmOpenThings", "RfmOpenThings\RfmOpenThings.csproj", "{A256C18C-6FC7-4675-ADB5-3367A536ED41}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RfmOta", "..\RfmOta\RfmOta\RfmOta.csproj", "{8AFDC085-2BAF-43BB-99EA-F1B9EEC597CC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenThings", "..\OpenThings\OpenThings\OpenThings.csproj", "{B24125BB-EDDC-491E-BA81-4074E475DAEA}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,14 +15,6 @@ Global
 		{A256C18C-6FC7-4675-ADB5-3367A536ED41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A256C18C-6FC7-4675-ADB5-3367A536ED41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A256C18C-6FC7-4675-ADB5-3367A536ED41}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8AFDC085-2BAF-43BB-99EA-F1B9EEC597CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8AFDC085-2BAF-43BB-99EA-F1B9EEC597CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8AFDC085-2BAF-43BB-99EA-F1B9EEC597CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8AFDC085-2BAF-43BB-99EA-F1B9EEC597CC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B24125BB-EDDC-491E-BA81-4074E475DAEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B24125BB-EDDC-491E-BA81-4074E475DAEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B24125BB-EDDC-491E-BA81-4074E475DAEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B24125BB-EDDC-491E-BA81-4074E475DAEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
