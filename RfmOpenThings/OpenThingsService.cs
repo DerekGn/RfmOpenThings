@@ -246,9 +246,13 @@ namespace RfmOpenThings
 
                         try
                         {
-                            Message message = _openThingsDecoder.Decode(_rfmUsb.Fifo.ToList(), _pidMap);
+                            var payload = _rfmUsb.Fifo.ToList();
 
-                            _logger.LogInformation($"Message Decoded {message}");
+                            _logger.LogDebug($"Received Packet: [{BitConverter.ToString(payload.ToArray())}]");
+
+                            Message message = _openThingsDecoder.Decode(payload, _pidMap);
+
+                            _logger.LogInformation($"Message Decoded: {message}");
 
                             result = operation(message);
 
