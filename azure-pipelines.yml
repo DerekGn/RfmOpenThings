@@ -1,10 +1,8 @@
 variables:
-- name: BuildParameters.Solution
+- name: BuildParameters.solution
   value: '**\*.sln'
-- name: BuildParameters.Version
-  value: $(Major).$(Minor).$(Patch).0
 
-name: v$(Major).$(Minor).$(Patch).0
+name: v$(Major).$(Minor).$(Patch).$(Build)
 
 trigger:
 - main
@@ -17,16 +15,15 @@ steps:
     displayName: "Build Solution"
     inputs:
       command: 'build'
-      projects: $(BuildParameters.Solution)
+      projects: $(BuildParameters.solution)
       configuration: $(BuildConfiguration)
-      arguments: /p:AssemblyVersion=$(BuildParameters.Version)
   - task: DotNetCoreCLI@2
+    displayName: "Pack Project"
     inputs:
-      command: 'publish'
-      publishWebProjects: false
-      zipAfterPublish: true
-      projects: '**\*.csproj'
-      arguments: '/p:AssemblyVersion=$(BuildParameters.Version) /p:AssemblyInformationalVersion=$(BuildParameters.Version) -o $(Build.ArtifactStagingDirectory)'
+      command: 'pack'
+      packagesToPack: '**/*.csproj'
+      versioningScheme: byEnvVar
+      versionEnvVar: PackageVersion
   - task: GitHubRelease@1
     displayName: "Publish Relase To GitHub"
     inputs:
