@@ -37,7 +37,6 @@ steps:
       custom: pack
       arguments: >
         RfmOpenThings.sln
-        --no-build
         --output $(Build.ArtifactStagingDirectory)
         -p:PackageVersion=$(PackageVersion)
         -p:Configuration=$(BuildConfiguration)
