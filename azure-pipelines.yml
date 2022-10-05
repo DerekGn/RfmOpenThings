@@ -28,7 +28,7 @@ steps:
       versioningScheme: byEnvVar
       versionEnvVar: PackageVersion
       configuration: $(BuildConfiguration)
-      nobuild: true
+      arguments: /p:Version=$(Build.BuildNumber)
   - task: GitHubRelease@1
     displayName: "Publish Relase To GitHub"
     inputs:
