@@ -20,15 +20,7 @@ steps:
       projects: $(BuildParameters.solution)
       configuration: $(BuildConfiguration)
       arguments: /p:Version=$(Build.BuildNumber)
-  # - task: DotNetCoreCLI@2
-  #   displayName: "Pack Project"
-  #   inputs:
-  #     command: 'pack'
-  #     packagesToPack: $(BuildParameters.solution)
-  #     versioningScheme: byEnvVar
-  #     versionEnvVar: PackageVersion
-  #     configuration: $(BuildConfiguration)
-  #     arguments: /p:Version=$(Build.BuildNumber)
+# Workaraound for the pack command not accepting arguments
 # https://github.com/microsoft/azure-pipelines-tasks/issues/11640
   - task: DotNetCoreCLI@2
     displayName: Pack
