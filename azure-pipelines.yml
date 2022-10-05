@@ -16,7 +16,7 @@ steps:
     inputs:
       command: 'build'
       versioningScheme: byEnvVar
-      versionEnvVar: PackageVersion
+      versionEnvVar: Build.BuildNumber
       projects: $(BuildParameters.solution)
       configuration: $(BuildConfiguration)
   - task: DotNetCoreCLI@2
