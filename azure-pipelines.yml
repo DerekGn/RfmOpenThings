@@ -19,6 +19,7 @@ steps:
       versionEnvVar: Build.BuildNumber
       projects: $(BuildParameters.solution)
       configuration: $(BuildConfiguration)
+      arguments: /p:Version=$(Build.BuildNumber)
   - task: DotNetCoreCLI@2
     displayName: "Pack Project"
     inputs:
@@ -26,7 +27,6 @@ steps:
       packagesToPack: '**/*.csproj'
       versioningScheme: byEnvVar
       versionEnvVar: PackageVersion
-      arguments: --no-build
   - task: GitHubRelease@1
     displayName: "Publish Relase To GitHub"
     inputs:
