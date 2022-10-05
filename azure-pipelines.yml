@@ -24,7 +24,7 @@ steps:
     displayName: "Pack Project"
     inputs:
       command: 'pack'
-      packagesToPack: '**/*.csproj'
+      packagesToPack: $(BuildParameters.solution)
       versioningScheme: byEnvVar
       versionEnvVar: PackageVersion
       configuration: $(BuildConfiguration)
