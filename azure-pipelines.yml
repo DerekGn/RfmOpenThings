@@ -29,13 +29,14 @@ steps:
   #     versionEnvVar: PackageVersion
   #     configuration: $(BuildConfiguration)
   #     arguments: /p:Version=$(Build.BuildNumber)
+# https://github.com/microsoft/azure-pipelines-tasks/issues/11640
   - task: DotNetCoreCLI@2
     displayName: Pack
     inputs:
       command: custom
       custom: pack
       arguments: >
-        $(BuildParameters.solution)
+        RfmOpenThings.sln
         --no-build
         --output $(Build.ArtifactStagingDirectory)
         -p:PackageVersion=$(PackageVersion)
