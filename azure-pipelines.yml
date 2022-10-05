@@ -30,15 +30,16 @@ steps:
   #     configuration: $(BuildConfiguration)
   #     arguments: /p:Version=$(Build.BuildNumber)
   - task: DotNetCoreCLI@2
-    displayName: "Pack Project"
+    displayName: Pack
     inputs:
       command: custom
-      custom: 'pack'
-      packagesToPack: $(BuildParameters.solution)
-      versioningScheme: byEnvVar
-      versionEnvVar: PackageVersion
-      configuration: $(BuildConfiguration)
-      arguments: /p:Version=$(Build.BuildNumber)
+      custom: pack
+      arguments: >
+        $(BuildParameters.solution)
+        --no-build
+        --output $(Build.ArtifactStagingDirectory)
+        -p:PackageVersion=$(PackageVersion)
+        -p:Configuration=$(BuildConfiguration)
   - task: GitHubRelease@1
     displayName: "Publish Relase To GitHub"
     inputs:
