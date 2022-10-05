@@ -27,6 +27,7 @@ steps:
       packagesToPack: '**/*.csproj'
       versioningScheme: byEnvVar
       versionEnvVar: PackageVersion
+      arguments: --no-build
   - task: GitHubRelease@1
     displayName: "Publish Relase To GitHub"
     inputs:
