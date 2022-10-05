@@ -32,7 +32,8 @@ steps:
         --output $(Build.ArtifactStagingDirectory)
         -p:PackageVersion=$(PackageVersion)
         -p:Configuration=$(BuildConfiguration)
-        -p:Version=$(Build.BuildNumber)
+        -p:Version=$(PackageVersion)
+        -p:AssemblyVersion=$(Build.BuildNumber)
   - task: GitHubRelease@1
     displayName: "Publish Relase To GitHub"
     inputs:
