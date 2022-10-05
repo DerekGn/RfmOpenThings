@@ -20,10 +20,20 @@ steps:
       projects: $(BuildParameters.solution)
       configuration: $(BuildConfiguration)
       arguments: /p:Version=$(Build.BuildNumber)
+  # - task: DotNetCoreCLI@2
+  #   displayName: "Pack Project"
+  #   inputs:
+  #     command: 'pack'
+  #     packagesToPack: $(BuildParameters.solution)
+  #     versioningScheme: byEnvVar
+  #     versionEnvVar: PackageVersion
+  #     configuration: $(BuildConfiguration)
+  #     arguments: /p:Version=$(Build.BuildNumber)
   - task: DotNetCoreCLI@2
     displayName: "Pack Project"
     inputs:
-      command: 'pack'
+      command: custom
+      custom: 'pack'
       packagesToPack: $(BuildParameters.solution)
       versioningScheme: byEnvVar
       versionEnvVar: PackageVersion
