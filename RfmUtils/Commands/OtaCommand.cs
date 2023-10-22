@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,33 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Configuration;
+using OpenThings;
+using RfmUsb.Net;
+using System.ComponentModel.DataAnnotations;
 
-namespace RfmOpenThings
+namespace RfmUtils.Commands
 {
-    [Verb("listen", HelpText = "Listen for OpenThings messages")]
-    internal class ListenOptions : BaseOptions
+    [Command(Description = "OTA a sensor")]
+    internal class OtaCommand : BaseRadioRxCommand
     {
+        public OtaCommand(
+            IOpenThingsDecoder openThingsDecoder,
+            IOpenThingsEncoder openThingsEncoder,
+            IConfiguration configuration,
+            IRfm69 rfm69) 
+            : base(openThingsDecoder, configuration, rfm69)
+        {
+        }
+
+        [Required]
+        [Option(Templates.HexFile, "The hex file to flash to the device", CommandOptionType.SingleValue)]
+        public string? HexFile { get; set; }
+
+        protected override int OnExecute(CommandLineApplication app, IConsole console)
+        {
+            return base.OnExecute(app, console);
+        }
     }
 }

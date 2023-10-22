@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,24 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+using Microsoft.Extensions.DependencyInjection;
+using RfmUtils.Services;
+using RfmUsb.Net;
 
-namespace RfmOpenThings
+namespace RfmUtils.Extensions
 {
-    [Verb("interval", HelpText = "Send an update Interval command to a remote sensor")]
-    internal class IntervalOptions : SensorOptions
+    public static class OpenThingsServiceExtensions
     {
-        [Option('u', "update", Required = true, HelpText = "The update interval in milliseconds. Can be decimal, octal or hex formatted value.")]
-        public string Interval { get; set; }
+        /// <summary>
+        /// Add the <see cref="IOpenThingsService"/> dependency services to the <see cref="IServiceCollection"/>
+        /// </summary>
+        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> to add the <see cref="IOpenThingsService"/> services</param>
+        /// <returns></returns>
+        public static IServiceCollection AddOpenThingsService(this IServiceCollection serviceCollection)
+        {
+            //serviceCollection.AddSingleton<IOpenThingsService, OpenThingsService>();
+            //serviceCollection.AddRfm6x();
+            return serviceCollection;
+        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,18 @@
 * SOFTWARE.
 */
 
-using CommandLine;
-using System;
+using McMaster.Extensions.CommandLineUtils;
 
-namespace RfmOpenThings
+namespace RfmUtils.Commands
 {
-    internal class BaseOptions
+    internal class BaseCommand
     {
-        [Option('s', "serial", Required = true, HelpText = "The serial port that an RfmUsb device is connected")]
-        public string SerialPort { get; set; }
-
-        [Option('b', "baudrate", Required = false, Default = 115200, HelpText = "The baud rate for the serial port")]
-        public int BaudRate { get; set; }
-
-        [Option('p', "outputpower", Required = false, Default = 2, HelpText = "The output power of the RfmUsb in db")]
-        public int OutputPower { get; set; }
-
-        public void ValidateOutputPower()
+        protected virtual int OnExecute(CommandLineApplication app, IConsole console)
         {
-            if (OutputPower < -2 || OutputPower > 20)
-                throw new ArgumentOutOfRangeException(nameof(OutputPower), "Must be between -2 and 20");
+            console.Error.WriteLine("You must specify a command. See --help for more details.");
+            app.ShowHelp();
+
+            return 0;
         }
     }
 }

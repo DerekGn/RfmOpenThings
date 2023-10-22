@@ -1,7 +1,7 @@
 ﻿
 using System;
 
-namespace RfmOpenThings
+namespace RfmUtils
 {
     internal static class StringExtensions
     {

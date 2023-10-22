@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,25 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+using System.Collections.Generic;
 
-namespace RfmOpenThings
+namespace RfmUtils.Services
 {
-    [Verb("identify", HelpText = "Send an Identify command to a specific sensor")]
-    internal class IdentifyOptions : SensorOptions
+    /// <summary>
+    /// A <see cref="Sensor"/> store
+    /// </summary>
+    internal interface ISensorStore
     {
+        /// <summary>
+        /// Read the stored <see cref="Sensor"/>
+        /// </summary>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="Sensor"/></returns>
+        IEnumerable<Sensor> ReadSensors();
+
+        /// <summary>
+        /// Write a <see cref="IEnumerable{T}"/> of <see cref="Sensor"/> to the store
+        /// </summary>
+        /// <param name="sensors">The <see cref="IEnumerable{T}"/> of <see cref="Sensor"/></param>
+        void WriteSensors(IEnumerable<Sensor> sensors);
     }
 }

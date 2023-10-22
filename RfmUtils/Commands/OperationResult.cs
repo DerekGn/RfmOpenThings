@@ -1,10 +1,9 @@
-﻿namespace RfmOpenThings
+﻿namespace RfmUtils.Commands
 {
     internal enum OperationResult
     {
         Continue,
         Complete,
-        Cancelled,
         Failed
     }
 }

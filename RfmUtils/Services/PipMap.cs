@@ -1,4 +1,4 @@
-﻿namespace RfmOpenThings
+﻿namespace RfmUtils.Services
 {
     internal class PipMap
     {
