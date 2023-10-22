@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm Energenie
+
 using System;
 using System.Collections.Generic;
 
@@ -38,15 +40,15 @@ namespace RfmUtils.Services
         public Sensor(
             uint sensorId,
             int productId,
-            int manufacturer,
+            Manufacturer manufacturer,
             DateTime discovered)
         {
             SensorId = sensorId;
             ProductId = productId;
-            Manufacturer = (Manufacturer)manufacturer;
+            Manufacturer = manufacturer;
             Discovered = discovered;
 
-            //ProductType = MapProductType(Manufacturer, ProductId);
+            ProductType = MapProductType(Manufacturer, ProductId);
         }
 
         public uint SensorId { get; }
@@ -66,9 +68,44 @@ namespace RfmUtils.Services
                 $"Discovered:\t[{Discovered}]";
         }
 
-        //private static string? MapProductType(Manufacturer manufacturer, int productId)
-        //{
+        private static string? MapProductType(Manufacturer manufacturer, int productId)
+        {
+            if (manufacturer == Manufacturer.Energenie)
+            {
+                return MapEnergenieProductType(productId);
+            }
+            else if(manufacturer == Manufacturer.Alt)
+            {
+                return MapAltProductType(productId);
+            }
+            else
+            {
+                return "Unknown";
+            }
+        }
 
-        //}
+        private static string? MapAltProductType(int productId)
+        {
+            return productId switch
+            {
+                0x01 => "Monitor",
+                0x02 => "Adapter Plus",
+                0x03 => "eTRV",
+                0x05 => "House Monitor",
+                0x0C => "Motion Sensor",
+                0x0D => "Open Sensor",
+                _ => "Unknown",
+            };
+        }
+
+        private static string? MapEnergenieProductType(int productId)
+        {
+            return productId switch
+            {
+                0x02 => "Air Quality Sensor",
+                0x03 => "Energy Meter",
+                _ => "Unknown",
+            };
+        }
     }
 }

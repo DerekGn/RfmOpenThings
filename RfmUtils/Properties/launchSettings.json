@@ -2,7 +2,7 @@
   "profiles": {
     "RfmOpenThings": {
       "commandName": "Project",
-      "commandLineArgs": "listen -p COM3"
+      "commandLineArgs": "list"
     }
   }
 }

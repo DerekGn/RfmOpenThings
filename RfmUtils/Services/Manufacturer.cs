@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm
+
 namespace RfmUtils.Services
 {
     public enum Manufacturer

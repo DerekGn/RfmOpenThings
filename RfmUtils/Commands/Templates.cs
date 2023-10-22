@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm rssi
+
 namespace RfmUtils.Commands
 {
     internal static class Templates

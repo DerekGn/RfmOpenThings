@@ -22,13 +22,15 @@
 * SOFTWARE.
 */
 
+
+// Ignore Spelling: Utils Rfm
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenThings;
 using RfmOta;
 using RfmUsb.Net;
-using RfmUsb.Net.Ports;
 using RfmUtils.Commands;
 using RfmUtils.Extensions;
 using RfmUtils.Services;

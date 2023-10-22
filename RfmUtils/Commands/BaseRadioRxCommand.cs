@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm pid
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using OpenThings;

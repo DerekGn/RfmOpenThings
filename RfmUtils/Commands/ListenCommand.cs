@@ -22,9 +22,10 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm app
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using OpenThings;
 using RfmUsb.Net;
 using RfmUtils.Services;
@@ -64,7 +65,7 @@ namespace RfmUtils.Commands
                     sensors.Add(new Sensor(
                         message.Header.SensorId,
                         message.Header.ProductId,
-                        message.Header.ManufacturerId,
+                        (Manufacturer)message.Header.ManufacturerId,
                         DateTime.UtcNow));
                 }
 

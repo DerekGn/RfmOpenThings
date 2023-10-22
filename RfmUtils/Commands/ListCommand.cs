@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm app
+
 using McMaster.Extensions.CommandLineUtils;
 using RfmUtils.Services;
 using System;

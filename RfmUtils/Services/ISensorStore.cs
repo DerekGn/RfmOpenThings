@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm
+
 using System.Collections.Generic;
 
 namespace RfmUtils.Services

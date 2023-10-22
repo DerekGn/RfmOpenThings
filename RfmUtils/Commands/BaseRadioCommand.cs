@@ -29,6 +29,8 @@ using System.Threading;
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm rssi dbm
+
 namespace RfmUtils.Commands
 {
     internal abstract class BaseRadioCommand : BaseCommand
