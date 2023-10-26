@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm app
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using OpenThings;
@@ -36,8 +38,9 @@ namespace RfmUtils.Commands
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder,
             IConfiguration configuration,
+            IParameters parameters,
             IRfm69 rfm69)
-            : base(openThingsDecoder, openThingsEncoder, configuration, rfm69)
+            : base(openThingsDecoder, openThingsEncoder, configuration, parameters, rfm69)
         {
         }
 
@@ -55,7 +58,7 @@ namespace RfmUtils.Commands
                         EncodeMessage(
                             CreateMessage(
                                 message.Header,
-                                OpenThingsParameter.IdentifyCommand,
+                                Parameters.GetParameter(ParameterIdentifiers.IdentifyCommand),
                                 new MessageRecordDataInt(0))));
 
                     result = OperationResult.Complete;

@@ -28,7 +28,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace RfmUtils.Commands
 {
-    internal class BaseCommand
+    internal abstract class BaseCommand
     {
         protected virtual int OnExecute(CommandLineApplication app, IConsole console)
         {

@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm pip ctrl
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using OpenThings;
@@ -34,10 +36,11 @@ using System.Linq;
 
 namespace RfmUtils.Commands
 {
+
     internal abstract class BaseRadioRxTxCommand : BaseRadioRxCommand
     {
-        protected readonly IOpenThingsEncoder OpenThingsEncoder;
-        protected readonly List<PipMap> PipMap;
+        protected readonly IOpenThingsEncoder? OpenThingsEncoder;
+        protected readonly List<PipMap>? PipMap;
 
         private readonly Random _random;
 
@@ -45,8 +48,9 @@ namespace RfmUtils.Commands
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder,
             IConfiguration configuration,
+            IParameters parameters,
             IRfm69 rfm69)
-            : base(openThingsDecoder, configuration, rfm69)
+            : base(openThingsDecoder, configuration, parameters, rfm69)
         {
             OpenThingsEncoder = openThingsEncoder ?? throw new ArgumentNullException(nameof(openThingsEncoder));
 
@@ -61,12 +65,12 @@ namespace RfmUtils.Commands
         }
 
         [Required]
-        [Option(Templates.SensorId, "The OpenThings sensor id. Can be decimal, octal or hex formatted value.", CommandOptionType.SingleValue)]
-        public int SensorId { get; set; }
+        [Option(Templates.SensorId, "The OpenThings sensor id", CommandOptionType.SingleValue)]
+        public uint? SensorId { get; set; }
 
         internal static Message CreateMessage(
             MessageHeader messageHeader,
-            OpenThingsParameter openThingsParameter,
+            Parameter parameter,
             BaseMessageRecordData messageData)
         {
             var identifyHeader = new MessageHeader(
@@ -77,7 +81,6 @@ namespace RfmUtils.Commands
 
             var message = new Message(identifyHeader);
 
-            var parameter = new Parameter(openThingsParameter);
             var record = new MessageRecord(parameter, messageData);
             message.Records.Add(record);
 
@@ -86,7 +89,7 @@ namespace RfmUtils.Commands
 
         internal IList<byte> EncodeMessage(Message requestMessage)
         {
-            var pip = PipMap.FirstOrDefault(_ => _.ManufacturerId == requestMessage.Header.ManufacturerId);
+            var pip = PipMap?.FirstOrDefault(_ => _.ManufacturerId == requestMessage.Header.ManufacturerId);
 
             List<Byte> encodedMessage;
 
@@ -109,7 +112,7 @@ namespace RfmUtils.Commands
 
             try
             {
-                console.WriteLine("Waiting for sesnor messages. Press ctrl + c to quit");
+                console.WriteLine("Waiting for sensor messages. Press ctrl + c to quit");
 
                 InitaliseRadio(SerialPort, BaudRate);
 
@@ -154,7 +157,7 @@ namespace RfmUtils.Commands
                     }
                     else if (source == SignalSource.Stop)
                     {
-                        console.WriteLine("Finished listening for mesages.");
+                        console.WriteLine("Finished listening for messages.");
                         break;
                     }
                 } while (operationResult == OperationResult.Continue);

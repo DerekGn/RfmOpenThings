@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm app ota
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using OpenThings;
@@ -35,10 +37,10 @@ namespace RfmUtils.Commands
     {
         public OtaCommand(
             IOpenThingsDecoder openThingsDecoder,
-            IOpenThingsEncoder openThingsEncoder,
             IConfiguration configuration,
+            IParameters parameters,
             IRfm69 rfm69) 
-            : base(openThingsDecoder, configuration, rfm69)
+            : base(openThingsDecoder, configuration, parameters, rfm69)
         {
         }
 

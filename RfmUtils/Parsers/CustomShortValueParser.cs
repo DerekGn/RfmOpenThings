@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2022 Derek Goslin https://github.com/DerekGn
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,19 @@
 * SOFTWARE.
 */
 
-// Ignore Spelling: Utils Rfm rssi dbm
+// Ignore Spelling: Utils Rfm
 
-namespace RfmUtils.Commands
+using System.Globalization;
+
+namespace RfmUtils.Parsers
 {
-    internal enum SignalSource
+    internal class CustomUShortValueParser : BaseIntValueParser<ushort>
     {
-        None = 258,
-        Irq = 0,
-        Stop = 1
+        protected override (bool, ushort) ParseFunction(string value, CultureInfo culture, NumberStyles numberStyles)
+        {
+            bool result = ushort.TryParse(value, numberStyles, culture, out ushort parsedValue);
+
+            return (result, parsedValue);
+        }
     }
 }

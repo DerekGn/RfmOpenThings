@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-// Ignore Spelling: Utils Rfm pid
+// Ignore Spelling: Utils Rfm pid rssi
 
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
@@ -36,16 +36,19 @@ namespace RfmUtils.Commands
 {
     internal abstract class BaseRadioRxCommand : BaseRadioCommand
     {
-        protected readonly IOpenThingsDecoder OpenThingsDecoder;
+        internal readonly IOpenThingsDecoder OpenThingsDecoder;
+        internal readonly IParameters Parameters;
         protected readonly List<PidMap>? PidMap;
         private readonly IRfm69 _rfm69;
 
         public BaseRadioRxCommand(
             IOpenThingsDecoder openThingsDecoder,
             IConfiguration configuration,
+            IParameters parameters,
             IRfm69 rfm69) : base(rfm69)
         {
             OpenThingsDecoder = openThingsDecoder ?? throw new ArgumentNullException(nameof(openThingsDecoder));
+            Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
             _rfm69 = rfm69 ?? throw new ArgumentNullException(nameof(rfm69));
 
             if (configuration == null)
@@ -72,14 +75,20 @@ namespace RfmUtils.Commands
                 _rfm69.DioInterruptMask = DioIrq.Dio0 | DioIrq.Dio3;
                 _rfm69.Mode = Mode.Rx;
 
+                SignalSource signalSource = SignalSource.None;
+
                 do
                 {
-                    var source = WaitForSignal();
+                    signalSource = WaitForSignal();
 
-                    if (source == SignalSource.Irq)
+                    if (signalSource == SignalSource.Irq)
                     {
+                        console.WriteLine($"Radio irq: [{_rfm69.IrqFlags}]");
+
                         if ((_rfm69.IrqFlags & Rfm69IrqFlags.PayloadReady) == Rfm69IrqFlags.PayloadReady)
                         {
+                            console.WriteLine("Processing received packet");
+
                             _rfm69.Mode = Mode.Standby;
 
                             try
@@ -94,21 +103,22 @@ namespace RfmUtils.Commands
                             }
 
                             _rfm69.Mode = Mode.Rx;
+
+                            console.WriteLine("Listening for device messages");
                         }
                     }
-                    else if (source == SignalSource.Stop)
+                    else if (signalSource == SignalSource.Stop)
                     {
                         console.WriteLine("Finished listening for messages.");
-                        break;
                     }
-                } while (true);
+                } while (signalSource != SignalSource.Stop);
             }
             finally
             {
+                _rfm69.Mode = Mode.Sleep;
                 console.CancelKeyPress -= Console_CancelKeyPress;
                 _rfm69.DioInterrupt -= RfmDeviceDioInterrupt;
                 _rfm69.DioInterruptMask = DioIrq.None;
-                _rfm69.Mode = Mode.Sleep;
                 _rfm69?.Close();
                 _rfm69?.Dispose();
             }

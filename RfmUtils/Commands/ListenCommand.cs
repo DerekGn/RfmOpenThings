@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-// Ignore Spelling: Utils Rfm app
+// Ignore Spelling: Utils Rfm app ctrl
 
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
@@ -41,11 +41,11 @@ namespace RfmUtils.Commands
 
         public ListenCommand(
            IOpenThingsDecoder openThingsDecoder,
-           IOpenThingsEncoder openThingsEncoder,
            IConfiguration configuration,
            ISensorStore deviceStore,
+           IParameters parameters,
            IRfm69 rfm69) 
-            : base(openThingsDecoder, configuration, rfm69)
+            : base(openThingsDecoder, configuration, parameters, rfm69)
         {
             _deviceStore = deviceStore ?? throw new ArgumentNullException(nameof(deviceStore));
         }
@@ -67,6 +67,10 @@ namespace RfmUtils.Commands
                         message.Header.ProductId,
                         (Manufacturer)message.Header.ManufacturerId,
                         DateTime.UtcNow));
+                }
+                else
+                {
+                    console.WriteLine($"Existing sensor detected [0x{message.Header.SensorId:X}]");
                 }
 
                 _deviceStore.WriteSensors(sensors);

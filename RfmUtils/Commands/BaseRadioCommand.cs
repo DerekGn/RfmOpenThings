@@ -1,11 +1,4 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using RfmUsb.Net;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading;
-
-/*
+﻿/*
 * MIT License
 *
 * Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
@@ -31,15 +24,21 @@ using System.Threading;
 
 // Ignore Spelling: Utils Rfm rssi dbm
 
+using McMaster.Extensions.CommandLineUtils;
+using RfmUsb.Net;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Threading;
+
 namespace RfmUtils.Commands
 {
     internal abstract class BaseRadioCommand : BaseCommand
     {
-        private readonly AutoResetEvent[] _waitHandles;
+        protected readonly IRfm69 Rfm69;
         private readonly AutoResetEvent _consoleSignal;
         private readonly AutoResetEvent _irqSignal;
-
-        protected readonly IRfm69 Rfm69;
+        private readonly AutoResetEvent[] _waitHandles;
 
         public BaseRadioCommand(IRfm69 rfm69)
         {
@@ -62,13 +61,13 @@ namespace RfmUtils.Commands
         [Option(Templates.OutputPower, "The output power of the RfmUsb in dbm", CommandOptionType.SingleValue)]
         public sbyte OutputPower { get; set; } = 0;
 
-        [Required]
-        [Option(Templates.SerialPort, "The serial port that an RfmUsb device is connected", CommandOptionType.SingleValue)]
-        public string? SerialPort { get; set; }
-
         [Range(-115, 0)]
         [Option(Templates.RssiThreshold, "The RSSI threshold", CommandOptionType.SingleValue)]
         public sbyte RssiThreshold { get; set; } = -50;
+
+        [Required]
+        [Option(Templates.SerialPort, "The serial port that an RfmUsb device is connected", CommandOptionType.SingleValue)]
+        public string? SerialPort { get; set; }
 
         internal void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
         {

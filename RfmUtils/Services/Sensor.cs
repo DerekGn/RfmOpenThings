@@ -31,12 +31,6 @@ namespace RfmUtils.Services
 {
     public record Sensor
     {
-        private static readonly List<Tuple<int, string>> productTypeMap = new List<Tuple<int, string>>()
-        {
-            new Tuple<int, string>( 0x55, "Alt"),
-            new Tuple<int, string>( 4, "Energenie")
-        };
-
         public Sensor(
             uint sensorId,
             int productId,

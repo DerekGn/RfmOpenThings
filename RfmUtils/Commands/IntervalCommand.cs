@@ -22,6 +22,8 @@
 * SOFTWARE.
 */
 
+// Ignore Spelling: Utils Rfm app
+
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using OpenThings;
@@ -37,14 +39,15 @@ namespace RfmUtils.Commands
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder,
             IConfiguration configuration,
+            IParameters parameters,
             IRfm69 rfm69)
-            : base(openThingsDecoder, openThingsEncoder, configuration, rfm69)
+            : base(openThingsDecoder, openThingsEncoder, configuration, parameters, rfm69)
         {
         }
 
         [Required]
-        [Option(Templates.Interval, "The sensor update interval in milliseconds.", CommandOptionType.SingleValue)]
-        public uint Interval { get; set; }
+        [Option(Templates.Interval, "The sensor update interval", CommandOptionType.SingleValue)]
+        public uint? Interval { get; set; }
 
         protected override int OnExecute(CommandLineApplication app, IConsole console)
         {
@@ -52,7 +55,7 @@ namespace RfmUtils.Commands
 
             return ExecuteRxTxCommand(console, (message) =>
             {
-                if (message.Header.SensorId == SensorId)
+                if (message.Header.SensorId == SensorId && Interval.HasValue)
                 {
                     console.WriteLine("Sending Interval Message");
 
@@ -60,8 +63,8 @@ namespace RfmUtils.Commands
                         EncodeMessage(
                             CreateMessage(
                                 message.Header,
-                                (OpenThingsParameter)((int)OpenThingsParameter.ReportPeriod | 0x80),
-                                new MessageRecordDataUInt(Interval))));
+                                Parameters.GetParameter(DefaultCommands.ReportPeriodCommand),
+                                new MessageRecordDataUInt(Interval.Value))));
 
                     return OperationResult.Complete;
                 }

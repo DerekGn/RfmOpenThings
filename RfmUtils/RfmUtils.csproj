@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\OpenThings\OpenThings\OpenThings.csproj" />
     <ProjectReference Include="..\..\RfmOta\RfmOta\RfmOta.csproj" />
   </ItemGroup>
 

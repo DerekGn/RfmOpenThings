@@ -22,14 +22,33 @@
 * SOFTWARE.
 */
 
-// Ignore Spelling: Utils Rfm rssi dbm
+using OpenThings;
 
-namespace RfmUtils.Commands
+namespace RfmUtils.Services
 {
-    internal enum SignalSource
+    internal class ExtendedParameters : DefaultParameters
     {
-        None = 258,
-        Irq = 0,
-        Stop = 1
+        public ExtendedParameters()
+        {
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.BatteryVoltage, 
+                nameof(ExtendedParameterIdentifiers.BatteryVoltage), "V"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.Iaq,
+                nameof(ExtendedParameterIdentifiers.Iaq), string.Empty));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.eCo2,
+                nameof(ExtendedParameterIdentifiers.eCo2), "ppm"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.EtOH,
+                nameof(ExtendedParameterIdentifiers.EtOH), "ppm"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.TVOC,
+                nameof(ExtendedParameterIdentifiers.TVOC), "mg/m^3"));
+        }
     }
 }

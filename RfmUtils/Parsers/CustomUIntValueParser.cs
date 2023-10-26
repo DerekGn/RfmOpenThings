@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2022 Derek Goslin https://github.com/DerekGn
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,24 +22,19 @@
 * SOFTWARE.
 */
 
-using Microsoft.Extensions.DependencyInjection;
-using RfmUtils.Services;
-using RfmUsb.Net;
+// Ignore Spelling: Utils Rfm
 
-namespace RfmUtils.Extensions
+using System.Globalization;
+
+namespace RfmUtils.Parsers
 {
-    public static class OpenThingsServiceExtensions
+    internal class CustomUIntValueParser : BaseIntValueParser<uint>
     {
-        /// <summary>
-        /// Add the <see cref="IOpenThingsService"/> dependency services to the <see cref="IServiceCollection"/>
-        /// </summary>
-        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> to add the <see cref="IOpenThingsService"/> services</param>
-        /// <returns></returns>
-        public static IServiceCollection AddOpenThingsService(this IServiceCollection serviceCollection)
+        protected override (bool, uint) ParseFunction(string value, CultureInfo culture, NumberStyles numberStyles)
         {
-            //serviceCollection.AddSingleton<IOpenThingsService, OpenThingsService>();
-            //serviceCollection.AddRfm6x();
-            return serviceCollection;
+            bool result = uint.TryParse(value, numberStyles, culture, out uint parsedValue);
+
+            return (result, parsedValue);
         }
     }
 }

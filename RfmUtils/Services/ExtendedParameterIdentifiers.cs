@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,37 @@
 * SOFTWARE.
 */
 
-// Ignore Spelling: Utils Rfm rssi dbm
+// Ignore Spelling: Iaq TVOC
 
-namespace RfmUtils.Commands
+using OpenThings;
+
+namespace RfmUtils.Services
 {
-    internal enum SignalSource
+    internal class ExtendedParameterIdentifiers : ParameterIdentifiers
     {
-        None = 258,
-        Irq = 0,
-        Stop = 1
+        /// <summary>
+        /// The devices battery voltage
+        /// </summary>
+        public const byte BatteryVoltage = 0x7D;
+
+        /// <summary>
+        /// The Indoor air quality
+        /// </summary>
+        public const byte Iaq = 0x7E;
+
+        /// <summary>
+        /// The estimated carbon dioxide level
+        /// </summary>
+        public const byte eCo2 = 0x7F;
+
+        /// <summary>
+        /// The equivalent ethanol level
+        /// </summary>
+        public const byte EtOH = 0x80;
+
+        /// <summary>
+        /// The total volatile organic compounds
+        /// </summary>
+        public const byte TVOC = 0x81;
     }
 }
