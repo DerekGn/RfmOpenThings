@@ -26,6 +26,7 @@
 
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenThings;
 using RfmUsb.Net;
 using RfmUtils.Services;
@@ -36,7 +37,6 @@ using System.Linq;
 
 namespace RfmUtils.Commands
 {
-
     internal abstract class BaseRadioRxTxCommand : BaseRadioRxCommand
     {
         protected readonly IOpenThingsEncoder? OpenThingsEncoder;
@@ -47,10 +47,11 @@ namespace RfmUtils.Commands
         public BaseRadioRxTxCommand(
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder,
+            ILogger<BaseRadioRxTxCommand> logger,
             IConfiguration configuration,
             IParameters parameters,
             IRfm69 rfm69)
-            : base(openThingsDecoder, configuration, parameters, rfm69)
+            : base(openThingsDecoder, logger, configuration, parameters, rfm69)
         {
             OpenThingsEncoder = openThingsEncoder ?? throw new ArgumentNullException(nameof(openThingsEncoder));
 
@@ -91,7 +92,7 @@ namespace RfmUtils.Commands
         {
             var pip = PipMap?.FirstOrDefault(_ => _.ManufacturerId == requestMessage.Header.ManufacturerId);
 
-            List<Byte> encodedMessage;
+            List<byte> encodedMessage;
 
             if (pip == null)
             {
@@ -112,12 +113,13 @@ namespace RfmUtils.Commands
 
             try
             {
-                console.WriteLine("Waiting for sensor messages. Press ctrl + c to quit");
+                Logger.LogInformation("Waiting for sensor messages. Press ctrl + c to quit");
 
                 InitaliseRadio(SerialPort, BaudRate);
 
-                console.CancelKeyPress += Console_CancelKeyPress;
-                Rfm69.DioInterrupt += RfmDeviceDioInterrupt;
+                Logger.LogInformation("Initialized Radio");
+
+                AttachEventHandlers(console);
 
                 Rfm69.SetDioMapping(Dio.Dio0, DioMapping.DioMapping1);
                 Rfm69.DioInterruptMask = DioIrq.Dio0;
@@ -142,7 +144,7 @@ namespace RfmUtils.Commands
 
                                 Message message = OpenThingsDecoder.Decode(payload, PidMap);
 
-                                console.WriteLine("Message Decoded: {message}", message);
+                                Logger.LogInformation("Message Decoded: {message}", message);
 
                                 operationResult = action(message);
                             }
@@ -157,20 +159,20 @@ namespace RfmUtils.Commands
                     }
                     else if (source == SignalSource.Stop)
                     {
-                        console.WriteLine("Finished listening for messages.");
+                        Logger.LogInformation("Finished listening for messages.");
                         break;
                     }
                 } while (operationResult == OperationResult.Continue);
 
-                if(operationResult == OperationResult.Complete)
+                if (operationResult == OperationResult.Complete)
                 {
                     result = 0;
                 }
             }
             finally
             {
-                console.CancelKeyPress -= Console_CancelKeyPress;
-                Rfm69.DioInterrupt -= RfmDeviceDioInterrupt;
+                DettachEventHandlers(console);
+
                 Rfm69.DioInterruptMask = DioIrq.None;
                 Rfm69.Mode = Mode.Sleep;
                 Rfm69?.Close();

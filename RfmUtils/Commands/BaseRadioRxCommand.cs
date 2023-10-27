@@ -26,6 +26,7 @@
 
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenThings;
 using RfmUsb.Net;
 using System;
@@ -36,6 +37,7 @@ namespace RfmUtils.Commands
 {
     internal abstract class BaseRadioRxCommand : BaseRadioCommand
     {
+        internal readonly ILogger<BaseRadioRxCommand> Logger;
         internal readonly IOpenThingsDecoder OpenThingsDecoder;
         internal readonly IParameters Parameters;
         protected readonly List<PidMap>? PidMap;
@@ -43,11 +45,13 @@ namespace RfmUtils.Commands
 
         public BaseRadioRxCommand(
             IOpenThingsDecoder openThingsDecoder,
+            ILogger<BaseRadioRxCommand> logger,
             IConfiguration configuration,
             IParameters parameters,
             IRfm69 rfm69) : base(rfm69)
         {
             OpenThingsDecoder = openThingsDecoder ?? throw new ArgumentNullException(nameof(openThingsDecoder));
+            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
             _rfm69 = rfm69 ?? throw new ArgumentNullException(nameof(rfm69));
 
@@ -65,10 +69,12 @@ namespace RfmUtils.Commands
 
             try
             {
-                InitaliseRadio(SerialPort, BaudRate);
+                Logger.LogInformation("Waiting for sensor messages. Press ctrl + c to quit");
 
-                console.CancelKeyPress += Console_CancelKeyPress;
-                _rfm69.DioInterrupt += RfmDeviceDioInterrupt;
+                InitaliseRadio(SerialPort, BaudRate);
+                Logger.LogInformation("Radio Initialized");
+
+                AttachEventHandlers(console);
 
                 _rfm69.SetDioMapping(Dio.Dio0, DioMapping.DioMapping1);
                 _rfm69.SetDioMapping(Dio.Dio3, DioMapping.DioMapping1);
@@ -77,48 +83,48 @@ namespace RfmUtils.Commands
 
                 SignalSource signalSource = SignalSource.None;
 
+                Logger.LogInformation("Listening for device packets");
+
                 do
                 {
                     signalSource = WaitForSignal();
 
                     if (signalSource == SignalSource.Irq)
                     {
-                        console.WriteLine($"Radio irq: [{_rfm69.IrqFlags}]");
+                        Logger.LogDebug("Radio irq: [{IrqFlags}]", _rfm69.IrqFlags);
 
                         if ((_rfm69.IrqFlags & Rfm69IrqFlags.PayloadReady) == Rfm69IrqFlags.PayloadReady)
                         {
-                            console.WriteLine("Processing received packet");
+                            Logger.LogInformation("Processing received packet");
 
                             _rfm69.Mode = Mode.Standby;
 
                             try
                             {
-                                console.WriteLine($"Message received Rssi: [{Rfm69.LastRssi}]");
+                                Logger.LogInformation("Message received Rssi: [{LastRssi}]", Rfm69.LastRssi);
 
                                 result = action(OpenThingsDecoder.Decode(_rfm69.Fifo.ToList(), PidMap));
                             }
                             catch (Exception ex)
                             {
-                                console.Error.WriteLine($"Decoding OpenThings Message Failed. [{ex.Message}]");
+                                Logger.LogError("Decoding OpenThings Message Failed. [{Message}]", ex.Message);
                             }
 
                             _rfm69.Mode = Mode.Rx;
-
-                            console.WriteLine("Listening for device messages");
                         }
                     }
                     else if (signalSource == SignalSource.Stop)
                     {
-                        console.WriteLine("Finished listening for messages.");
+                        Logger.LogInformation("Finished listening for messages.");
                     }
                 } while (signalSource != SignalSource.Stop);
             }
             finally
             {
-                _rfm69.Mode = Mode.Sleep;
-                console.CancelKeyPress -= Console_CancelKeyPress;
-                _rfm69.DioInterrupt -= RfmDeviceDioInterrupt;
+                DettachEventHandlers(console);
+
                 _rfm69.DioInterruptMask = DioIrq.None;
+                _rfm69.Mode = Mode.Sleep;
                 _rfm69?.Close();
                 _rfm69?.Dispose();
             }

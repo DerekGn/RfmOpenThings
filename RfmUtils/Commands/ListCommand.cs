@@ -25,6 +25,7 @@
 // Ignore Spelling: Utils Rfm app
 
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Logging;
 using RfmUtils.Services;
 using System;
 using System.Linq;
@@ -32,12 +33,15 @@ using System.Linq;
 namespace RfmUtils.Commands
 {
     [Command(Description = "List all previously discovered sensors")]
+    [Subcommand(typeof(ListClearCommand))]
     internal class ListCommand : BaseCommand
     {
+        private readonly ILogger<ListCommand> logger;
         private readonly ISensorStore _deviceStore;
 
-        public ListCommand(ISensorStore deviceStore)
+        public ListCommand(ILogger<ListCommand> logger, ISensorStore deviceStore)
         {
+            this.logger = logger;
             _deviceStore = deviceStore ?? throw new ArgumentNullException(nameof(deviceStore));
         }
 
@@ -47,22 +51,22 @@ namespace RfmUtils.Commands
 
             try
             {
-                console.WriteLine("Listing discovered devices");
+                logger.LogInformation("Listing discovered devices");
 
                 var devices = _deviceStore.ReadSensors();
 
-                console.WriteLine($"[{devices.Count()}] Stored devices");
+                logger.LogInformation("[{Count}] Stored devices", devices.Count());
 
                 foreach (var device in devices)
                 {
-                    console.WriteLine(device);
+                    logger.LogInformation("\r\n{device}", device.ToString());
                 }
 
                 result = 0;
             }
             catch (Exception ex)
             {
-                console.Error.WriteLine("Unhandled exception occurred. {ex}", ex);
+                logger.LogError("Unhandled exception occurred. {ex}", ex);
             }
 
             return result;

@@ -69,9 +69,21 @@ namespace RfmUtils.Commands
         [Option(Templates.SerialPort, "The serial port that an RfmUsb device is connected", CommandOptionType.SingleValue)]
         public string? SerialPort { get; set; }
 
+        internal void AttachEventHandlers(IConsole console)
+        {
+            console.CancelKeyPress += Console_CancelKeyPress;
+            Rfm69.DioInterrupt += RfmDeviceDioInterrupt;
+        }
+
         internal void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
         {
             _consoleSignal.Set();
+        }
+
+        internal void DettachEventHandlers(IConsole console)
+        {
+            console.CancelKeyPress -= Console_CancelKeyPress;
+            Rfm69.DioInterrupt -= RfmDeviceDioInterrupt;
         }
 
         internal void InitaliseRadio(string serialPort, int baudRate)

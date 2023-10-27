@@ -34,6 +34,11 @@ namespace RfmUtils.Services
     internal interface ISensorStore
     {
         /// <summary>
+        /// Clear the discovered devices list
+        /// </summary>
+        void ClearSensors();
+
+        /// <summary>
         /// Read the stored <see cref="Sensor"/>
         /// </summary>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="Sensor"/></returns>

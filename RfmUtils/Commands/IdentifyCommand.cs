@@ -26,6 +26,7 @@
 
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenThings;
 using RfmUsb.Net;
 
@@ -37,10 +38,11 @@ namespace RfmUtils.Commands
         public IdentifyCommand(
             IOpenThingsDecoder openThingsDecoder,
             IOpenThingsEncoder openThingsEncoder,
+            ILogger<IdentifyCommand> logger,
             IConfiguration configuration,
             IParameters parameters,
             IRfm69 rfm69)
-            : base(openThingsDecoder, openThingsEncoder, configuration, parameters, rfm69)
+            : base(openThingsDecoder, openThingsEncoder, logger, configuration, parameters, rfm69)
         {
         }
 
@@ -52,14 +54,14 @@ namespace RfmUtils.Commands
             {
                 if (message.Header.SensorId == SensorId)
                 {
-                    console.WriteLine("Sending Identify Message");
+                   Logger.LogInformation("Sending Identify Message");
 
-                   Rfm69.Transmit(
-                        EncodeMessage(
-                            CreateMessage(
-                                message.Header,
-                                Parameters.GetParameter(ParameterIdentifiers.IdentifyCommand),
-                                new MessageRecordDataInt(0))));
+                    Rfm69.Transmit(
+                         EncodeMessage(
+                             CreateMessage(
+                                 message.Header,
+                                 Parameters.GetParameter(ParameterIdentifiers.IdentifyCommand),
+                                 new MessageRecordDataInt(0))));
 
                     result = OperationResult.Complete;
                 }

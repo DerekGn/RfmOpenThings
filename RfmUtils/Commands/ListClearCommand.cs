@@ -22,61 +22,45 @@
 * SOFTWARE.
 */
 
-// Ignore Spelling: Utils Rfm app ctrl
-
 using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OpenThings;
-using RfmUsb.Net;
 using RfmUtils.Services;
 using System;
-using System.Linq;
 
 namespace RfmUtils.Commands
 {
-    [Command(Description = "Listen for sensor messages")]
-    internal class ListenCommand : BaseRadioRxCommand
+    [Command(Name = "clear", Description = "Clear all previously discovered sensors")]
+    internal class ListClearCommand : BaseCommand
     {
         private readonly ISensorStore _deviceStore;
+        private readonly ILogger<ListClearCommand> _logger;
 
-        public ListenCommand(
-           IOpenThingsDecoder openThingsDecoder,
-           ILogger<ListenCommand> logger,
-           IConfiguration configuration,
-           ISensorStore deviceStore,
-           IParameters parameters,
-           IRfm69 rfm69) 
-            : base(openThingsDecoder, logger, configuration, parameters, rfm69)
+        public ListClearCommand(ILogger<ListClearCommand> logger, ISensorStore deviceStore)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _deviceStore = deviceStore ?? throw new ArgumentNullException(nameof(deviceStore));
         }
 
         protected override int OnExecute(CommandLineApplication app, IConsole console)
         {
-            return ExecuteRxCommand(console, (message) =>
+            int result = -1;
+
+            try
             {
-                var sensors = _deviceStore.ReadSensors().ToList();
+                _logger.LogInformation("Clearing discovered devices");
 
-                if (!sensors.Any(s => s.SensorId == message.Header.SensorId))
-                {
-                    Logger.LogInformation("New sensor detected [0x{SensorId:X}]", message.Header.SensorId);
+                _deviceStore.ClearSensors();
 
-                    sensors.Add(new Sensor(
-                        message.Header.SensorId,
-                        message.Header.ProductId,
-                        (Manufacturer)message.Header.ManufacturerId,
-                        DateTime.UtcNow));
-                }
-                else
-                {
-                    Logger.LogInformation("Existing sensor detected [0x{SensorId:X}]", message.Header.SensorId);
-                }
+                _logger.LogInformation("Cleared discovered devices");
 
-                _deviceStore.WriteSensors(sensors);
+                result = 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Unhandled exception occurred. {ex}", ex);
+            }
 
-                return 0;
-            });
+            return result;
         }
     }
 }

@@ -35,6 +35,14 @@ namespace RfmUtils.Services
     {
         private const string FileName = "discovered-sensors.json";
 
+        public void ClearSensors()
+        {
+            if(File.Exists(FileName))
+            {
+                File.Delete(FileName);
+            }
+        }
+
         public IEnumerable<Sensor> ReadSensors()
         {
             IList<Sensor> sensors = new List<Sensor>();

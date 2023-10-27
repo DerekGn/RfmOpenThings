@@ -26,6 +26,7 @@
 
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenThings;
 using RfmUsb.Net;
 using System.ComponentModel.DataAnnotations;
@@ -38,9 +39,10 @@ namespace RfmUtils.Commands
         public OtaCommand(
             IOpenThingsDecoder openThingsDecoder,
             IConfiguration configuration,
+            ILogger<OtaCommand> logger,
             IParameters parameters,
             IRfm69 rfm69) 
-            : base(openThingsDecoder, configuration, parameters, rfm69)
+            : base(openThingsDecoder, logger, configuration, parameters, rfm69)
         {
         }
 

@@ -82,12 +82,9 @@ namespace RfmUtils.Services
         {
             return productId switch
             {
-                0x01 => "Monitor",
-                0x02 => "Adapter Plus",
-                0x03 => "eTRV",
-                0x05 => "House Monitor",
-                0x0C => "Motion Sensor",
-                0x0D => "Open Sensor",
+                0x01 => "Temperature Humidity Sensor",
+                0x02 => "AQS Sensor",
+                0x03 => "Energy Meter",
                 _ => "Unknown",
             };
         }
