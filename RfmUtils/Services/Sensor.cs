@@ -57,7 +57,7 @@ namespace RfmUtils.Services
 
         public override string ToString()
         {
-            return $"SensorId:\t[0x{SensorId:X}]\r\nProductId:\t[0x{ProductId:X}]\r\n" +
+            return $"SensorId:\t[0x{SensorId:X}]\r\nProductId:\t[0x{ProductId:X2}]\r\n" +
                 $"ProductType:\t[{ProductType}]\r\nManufacture:\t[{Manufacturer}]\r\n" +
                 $"Discovered:\t[{Discovered}]";
         }
@@ -93,8 +93,12 @@ namespace RfmUtils.Services
         {
             return productId switch
             {
-                0x02 => "Air Quality Sensor",
-                0x03 => "Energy Meter",
+                0x01 => "MIHO004 Home Monitor",
+                0x02 => "MIHO005 Home Smart Plug",
+                0x03 => "MIHO013 eTrv",
+                0x05 => "MIHO006 Smart Power Monitor",
+                0x0C => "MIHO032 Smart Motion Sensor",
+                0x0D => "MIHO032 Smart Door/Window Open Sensor",
                 _ => "Unknown",
             };
         }

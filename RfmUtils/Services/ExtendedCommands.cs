@@ -26,33 +26,11 @@ using OpenThings;
 
 namespace RfmUtils.Services
 {
-    internal class ExtendedParameters : DefaultParameters
+    internal class ExtendedCommands : DefaultCommands
     {
-        public ExtendedParameters()
-        {
-            Add(new Parameter(
-                ExtendedParameterIdentifiers.BatteryVoltage, 
-                nameof(ExtendedParameterIdentifiers.BatteryVoltage), "V"));
-
-            Add(new Parameter(
-                ExtendedParameterIdentifiers.Iaq,
-                nameof(ExtendedParameterIdentifiers.Iaq), string.Empty));
-
-            Add(new Parameter(
-                ExtendedParameterIdentifiers.eCo2,
-                nameof(ExtendedParameterIdentifiers.eCo2), "ppm"));
-
-            Add(new Parameter(
-                ExtendedParameterIdentifiers.EtOH,
-                nameof(ExtendedParameterIdentifiers.EtOH), "ppm"));
-
-            Add(new Parameter(
-                ExtendedParameterIdentifiers.TVOC,
-                nameof(ExtendedParameterIdentifiers.TVOC), "mg/m^3"));
-
-            Add(new Parameter(
-                ExtendedCommands.ExecuteBootLoaderCommand,
-                nameof(ExtendedCommands.ExecuteBootLoaderCommand), string.Empty));
-        }
+        /// <summary>
+        /// A command to execute the devices boot loader
+        /// </summary>
+        public const byte ExecuteBootLoaderCommand = 0xFF;
     }
 }

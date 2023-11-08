@@ -24,6 +24,7 @@
 
 // Ignore Spelling: Utils Rfm
 
+using HexIO.Factories;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,9 +46,29 @@ namespace RfmUtils
     [Subcommand(typeof(ListCommand))]
     [Subcommand(typeof(ListenCommand))]
     [Subcommand(typeof(OtaCommand))]
+    [Subcommand(typeof(RssiCommand))]
     internal class Program
     {
         private static IConfiguration _configuration;
+
+        private static ServiceProvider BuildServiceProvider()
+        {
+            var serviceCollection = new ServiceCollection()
+                .AddOta()
+                .AddRfmUsb()
+                .AddLogging()
+                .AddSingleton<IRfm, Rfm69>()
+                .AddSingleton(_configuration)
+                .AddSingleton<IOtaService, OtaService>()
+                .AddSingleton<ISensorStore, SensorStore>()
+                .AddLogging(builder => builder.AddSerilog())
+                .AddSingleton<IParameters, ExtendedParameters>()
+                .AddSingleton<IOpenThingsDecoder, OpenThingsDecoder>()
+                .AddSingleton<IOpenThingsEncoder, OpenThingsEncoder>()
+                .AddSingleton<IIntelHexStreamReaderFactory, IntelHexStreamReaderFactory>();
+
+            return serviceCollection.BuildServiceProvider();
+        }
 
         private static int Main(string[] args)
         {
@@ -85,23 +106,6 @@ namespace RfmUtils
             }
 
             return result;
-        }
-
-        private static ServiceProvider BuildServiceProvider()
-        {
-            var serviceCollection = new ServiceCollection()
-                .AddOta()
-                .AddRfmUsb()
-                .AddLogging()
-                .AddSingleton<IRfm, Rfm69>()
-                .AddSingleton(_configuration)
-                .AddSingleton<ISensorStore, SensorStore>()
-                .AddLogging(builder => builder.AddSerilog())
-                .AddSingleton<IParameters, ExtendedParameters>()
-                .AddSingleton<IOpenThingsDecoder, OpenThingsDecoder>()
-                .AddSingleton<IOpenThingsEncoder, OpenThingsEncoder>();
-
-            return serviceCollection.BuildServiceProvider();
         }
 
         private static IConfiguration SetupConfiguration(string[] args)

@@ -28,6 +28,7 @@ using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenThings;
+using OpenThings.Exceptions;
 using RfmUsb.Net;
 using RfmUtils.Services;
 using System;
@@ -94,7 +95,7 @@ namespace RfmUtils.Commands
 
             List<byte> encodedMessage;
 
-            if (pip == null)
+            if (pip != null)
             {
                 encodedMessage = OpenThingsEncoder.Encode(requestMessage, pip.Pip, (ushort)_random.Next(ushort.MaxValue)).ToList();
             }
@@ -115,59 +116,59 @@ namespace RfmUtils.Commands
             {
                 Logger.LogInformation("Waiting for sensor messages. Press ctrl + c to quit");
 
-                InitaliseRadio(SerialPort, BaudRate);
-
-                Logger.LogInformation("Initialized Radio");
+                InitaliseRadioOpenThings(SerialPort, BaudRate);
+                Logger.LogInformation("Radio Initialized");
 
                 AttachEventHandlers(console);
 
+                // Enable DIO3 to capture rssi
                 Rfm69.SetDioMapping(Dio.Dio0, DioMapping.DioMapping1);
-                Rfm69.DioInterruptMask = DioIrq.Dio0;
+                Rfm69.SetDioMapping(Dio.Dio3, DioMapping.DioMapping1);
+                Rfm69.DioInterruptMask = DioIrq.Dio0 | DioIrq.Dio3;
                 Rfm69.Mode = Mode.Rx;
+
+                SignalSource signalSource = SignalSource.None;
+
+                Logger.LogInformation("Listening for device packets");
 
                 do
                 {
-                    var source = WaitForSignal();
+                    signalSource = WaitForSignal();
 
-                    if (source == SignalSource.Irq)
+                    if (signalSource == SignalSource.Irq)
                     {
+                        Logger.LogDebug("Radio irq: [{IrqFlags}]", Rfm69.IrqFlags);
+
                         if ((Rfm69.IrqFlags & Rfm69IrqFlags.PayloadReady) == Rfm69IrqFlags.PayloadReady)
                         {
+                            Logger.LogInformation("Processing received packet");
+
                             Rfm69.Mode = Mode.Standby;
 
                             try
                             {
-                                var payload = Rfm69.Fifo.ToList();
+                                Logger.LogInformation("Message received Rssi: [{LastRssi}]", Rfm69.LastRssi);
 
-                                //console.WriteLine("Received Packet: [{message}]",
-                                //    BitConverter.ToString(payload.ToArray()));
-
-                                Message message = OpenThingsDecoder.Decode(payload, PidMap);
-
-                                Logger.LogInformation("Message Decoded: {message}", message);
-
-                                operationResult = action(message);
+                                operationResult = action(OpenThingsDecoder.Decode(Rfm69.Fifo.ToList(), PidMap));
+                            }
+                            catch (OpenThingsException ex)
+                            {
+                                Logger.LogError("Decoding OpenThings Message Failed. [{Message}]", ex.Message);
                             }
                             catch (Exception ex)
                             {
-                                console.Error.WriteLine("Decoding OpenThings Message Failed. [{message}]",
-                                    ex.Message);
+                                Logger.LogError("Unhandled exception occurred [{Message}]", ex.Message);
                             }
 
                             Rfm69.Mode = Mode.Rx;
                         }
                     }
-                    else if (source == SignalSource.Stop)
+                    else if (signalSource == SignalSource.Stop)
                     {
                         Logger.LogInformation("Finished listening for messages.");
-                        break;
+                        operationResult = OperationResult.Complete;
                     }
                 } while (operationResult == OperationResult.Continue);
-
-                if (operationResult == OperationResult.Complete)
-                {
-                    result = 0;
-                }
             }
             finally
             {

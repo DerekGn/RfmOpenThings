@@ -55,7 +55,7 @@ namespace RfmUtils.Commands
 
         [Range(0, 102E+7)]
         [Option(Templates.Frequency, "The radio center frequency", CommandOptionType.SingleValue)]
-        public int Frequency { get; set; } = 433000000;
+        public uint Frequency { get; set; } = 433000000;
 
         [Range(-2, 20)]
         [Option(Templates.OutputPower, "The output power of the RfmUsb in dbm", CommandOptionType.SingleValue)]
@@ -67,7 +67,7 @@ namespace RfmUtils.Commands
 
         [Required]
         [Option(Templates.SerialPort, "The serial port that an RfmUsb device is connected", CommandOptionType.SingleValue)]
-        public string? SerialPort { get; set; }
+        public required string SerialPort { get; set; }
 
         internal void AttachEventHandlers(IConsole console)
         {
@@ -86,7 +86,7 @@ namespace RfmUtils.Commands
             Rfm69.DioInterrupt -= RfmDeviceDioInterrupt;
         }
 
-        internal void InitaliseRadio(string serialPort, int baudRate)
+        internal void InitaliseRadioOpenThings(string serialPort, int baudRate)
         {
             Rfm69.Open(serialPort, baudRate);
             Rfm69.ExecuteReset();

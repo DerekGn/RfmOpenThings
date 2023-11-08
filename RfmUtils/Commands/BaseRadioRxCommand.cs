@@ -28,6 +28,7 @@ using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenThings;
+using OpenThings.Exceptions;
 using RfmUsb.Net;
 using System;
 using System.Collections.Generic;
@@ -71,11 +72,12 @@ namespace RfmUtils.Commands
             {
                 Logger.LogInformation("Waiting for sensor messages. Press ctrl + c to quit");
 
-                InitaliseRadio(SerialPort, BaudRate);
+                InitaliseRadioOpenThings(SerialPort, BaudRate);
                 Logger.LogInformation("Radio Initialized");
 
                 AttachEventHandlers(console);
 
+                // Enable DIO3 to capture rssi
                 _rfm69.SetDioMapping(Dio.Dio0, DioMapping.DioMapping1);
                 _rfm69.SetDioMapping(Dio.Dio3, DioMapping.DioMapping1);
                 _rfm69.DioInterruptMask = DioIrq.Dio0 | DioIrq.Dio3;
@@ -105,9 +107,13 @@ namespace RfmUtils.Commands
 
                                 result = action(OpenThingsDecoder.Decode(_rfm69.Fifo.ToList(), PidMap));
                             }
-                            catch (Exception ex)
+                            catch (OpenThingsException ex)
                             {
                                 Logger.LogError("Decoding OpenThings Message Failed. [{Message}]", ex.Message);
+                            }
+                            catch(Exception ex)
+                            {
+                                Logger.LogError("Unhandled exception occurred [{Message}]", ex.Message);
                             }
 
                             _rfm69.Mode = Mode.Rx;
