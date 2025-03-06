@@ -116,7 +116,7 @@ namespace RfmUtils.Commands
             {
                 Logger.LogInformation("Waiting for sensor messages. Press ctrl + c to quit");
 
-                InitaliseRadioOpenThings(SerialPort, BaudRate);
+                InitialiseRadioOpenThings(SerialPort, BaudRate);
                 Logger.LogInformation("Radio Initialized");
 
                 AttachEventHandlers(console);

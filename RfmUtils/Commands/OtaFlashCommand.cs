@@ -70,15 +70,17 @@ namespace RfmUtils.Commands
                 {
                     using var stream = File.OpenRead(HexFile);
 
-                    ReconfigureRadio(
-                        Rfm69,
-                        BaudRate,
-                        Frequency,
-                        SerialPort,
-                        OutputPower,
-                        RssiThreshold);
+                    //ReconfigureRadio(
+                    //    Rfm69,
+                    //    BaudRate,
+                    //    Frequency,
+                    //    SerialPort,
+                    //    OutputPower,
+                    //    RssiThreshold);
 
-                    if (_otaService.OtaUpdate(Rfm69, stream, out uint crc))
+                    InitialiseRadioOpenThings(SerialPort, BaudRate);
+
+                    if (_otaService.OtaUpdate(2, stream, out uint crc))
                     {
                         _logger.LogInformation("OTA flash update completed. Crc: [0x{crc:X}]", crc);
                         result = 0;
@@ -113,6 +115,7 @@ namespace RfmUtils.Commands
         {
             rfm69.Open(serialPort, baudRate);
             rfm69.ExecuteReset();
+
             rfm69.RxBw = 9;
             rfm69.RxBwAfc = 9;
             rfm69.CrcOn = true;
@@ -122,14 +125,15 @@ namespace RfmUtils.Commands
             rfm69.Frequency = frequency;
             rfm69.TxStartCondition = true;
             rfm69.OutputPower = outputPower;
+            rfm69.FrequencyDeviation = 0x01EC;
             rfm69.RssiThreshold = rssiThreshold;
             rfm69.DccFreq = DccFreq.FreqPercent0_125;
             rfm69.ModulationType = ModulationType.Ook;
             rfm69.DccFreqAfc = DccFreq.FreqPercent0_125;
             rfm69.Sync = new List<byte>() { 0x55, 0x55 };
             rfm69.DcFreeEncoding = DcFreeEncoding.Whitening;
-            rfm69.OokModulationShaping = OokModulationShaping.None;
-
+            rfm69.FskModulationShaping = FskModulationShaping.None;
+            
             // Enable DIO3 to capture rssi
             rfm69.SetDioMapping(Dio.Dio3, DioMapping.DioMapping1);
             rfm69.DioInterruptMask = DioIrq.Dio3;

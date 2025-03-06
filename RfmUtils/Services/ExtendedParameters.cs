@@ -31,7 +31,7 @@ namespace RfmUtils.Services
         public ExtendedParameters()
         {
             Add(new Parameter(
-                ExtendedParameterIdentifiers.BatteryVoltage, 
+                ExtendedParameterIdentifiers.BatteryVoltage,
                 nameof(ExtendedParameterIdentifiers.BatteryVoltage), "V"));
 
             Add(new Parameter(
@@ -49,6 +49,78 @@ namespace RfmUtils.Services
             Add(new Parameter(
                 ExtendedParameterIdentifiers.TVOC,
                 nameof(ExtendedParameterIdentifiers.TVOC), "mg/m^3"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.CurrentLive,
+                nameof(ExtendedParameterIdentifiers.CurrentLive), "A"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.PhaseAngleLive,
+                nameof(ExtendedParameterIdentifiers.PhaseAngleLive), "°"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ActivePowerLive,
+                nameof(ExtendedParameterIdentifiers.ActivePowerLive), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.PowerFactorLive,
+                nameof(ExtendedParameterIdentifiers.PowerFactorLive), string.Empty));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ReactivePowerLive,
+                nameof(ExtendedParameterIdentifiers.ReactivePowerLive), "kvar"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ApparentPowerLive,
+                nameof(ExtendedParameterIdentifiers.ApparentPowerLive), "kVA"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.CurrentNeutral,
+                nameof(ExtendedParameterIdentifiers.CurrentNeutral), "A"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.PhaseAngleNeutral,
+                nameof(ExtendedParameterIdentifiers.PhaseAngleNeutral), "°"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ActivePowerNeutral,
+                nameof(ExtendedParameterIdentifiers.ActivePowerNeutral), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.PowerFactorNeutral,
+                nameof(ExtendedParameterIdentifiers.PowerFactorNeutral), string.Empty));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ReactivePowerNeutral,
+                nameof(ExtendedParameterIdentifiers.ReactivePowerNeutral), "kvar"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ApparentPowerNeutral,
+                nameof(ExtendedParameterIdentifiers.ApparentPowerNeutral), "kVA"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.AbsoluteActiveEnergy,
+                nameof(ExtendedParameterIdentifiers.AbsoluteActiveEnergy), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.AbsoluteReactiveEnergy,
+                nameof(ExtendedParameterIdentifiers.ReverseReactiveEnergy), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ForwardActiveEnergy,
+                nameof(ExtendedParameterIdentifiers.ForwardActiveEnergy), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ForwardReactiveEnergy,
+                nameof(ExtendedParameterIdentifiers.ForwardReactiveEnergy), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ReverseActiveEnergy,
+                nameof(ExtendedParameterIdentifiers.ReverseActiveEnergy), "kW"));
+
+            Add(new Parameter(
+                ExtendedParameterIdentifiers.ReverseReactiveEnergy,
+                nameof(ExtendedParameterIdentifiers.ReverseReactiveEnergy), "kW"));
 
             Add(new Parameter(
                 ExtendedCommands.ExecuteBootLoaderCommand,

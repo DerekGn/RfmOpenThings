@@ -2,7 +2,7 @@
   "profiles": {
     "RfmOpenThings": {
       "commandName": "Project",
-      "commandLineArgs": "ota flash -h F:\\Git\\RfmAqs\\Firmware\\builds\\release\\RfmAqs_2.0.3.hex -p COM3"
+      "commandLineArgs": "ota flash -h RfmAqs.hex -p COM5"
     }
   }
 }

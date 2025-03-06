@@ -32,7 +32,6 @@ using OpenThings.Exceptions;
 using RfmUsb.Net;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RfmUtils.Commands
 {
@@ -72,15 +71,18 @@ namespace RfmUtils.Commands
             {
                 Logger.LogInformation("Waiting for sensor messages. Press ctrl + c to quit");
 
-                InitaliseRadioOpenThings(SerialPort, BaudRate);
+                InitialiseRadioOpenThings(SerialPort, BaudRate);
                 Logger.LogInformation("Radio Initialized");
 
                 AttachEventHandlers(console);
 
-                // Enable DIO3 to capture rssi
+                // Enable DIO0 to capture payload ready IRQ 
                 _rfm69.SetDioMapping(Dio.Dio0, DioMapping.DioMapping1);
-                _rfm69.SetDioMapping(Dio.Dio3, DioMapping.DioMapping1);
-                _rfm69.DioInterruptMask = DioIrq.Dio0 | DioIrq.Dio3;
+                // Enable DIO1 to capture FIFO level IRQ for buffered read
+                _rfm69.SetDioMapping(Dio.Dio1, DioMapping.DioMapping2);
+                _rfm69.DioInterruptMask = DioIrq.Dio0 | DioIrq.Dio1;
+                _rfm69.BufferedIoEnable = true;
+                _rfm69.PayloadLength = 0xFF;
                 _rfm69.Mode = Mode.Rx;
 
                 SignalSource signalSource = SignalSource.None;
@@ -93,7 +95,7 @@ namespace RfmUtils.Commands
 
                     if (signalSource == SignalSource.Irq)
                     {
-                        Logger.LogDebug("Radio irq: [{IrqFlags}]", _rfm69.IrqFlags);
+                        Logger.LogDebug("Radio Irq: [{IrqFlags}]", _rfm69.IrqFlags);
 
                         if ((_rfm69.IrqFlags & Rfm69IrqFlags.PayloadReady) == Rfm69IrqFlags.PayloadReady)
                         {
@@ -105,15 +107,19 @@ namespace RfmUtils.Commands
                             {
                                 Logger.LogInformation("Message received Rssi: [{LastRssi}]", Rfm69.LastRssi);
 
-                                result = action(OpenThingsDecoder.Decode(_rfm69.Fifo.ToList(), PidMap));
+                                byte[] payload = new byte[_rfm69.Stream.Length];
+
+                                _rfm69.Stream.Read(payload, 0, payload.Length);
+
+                                result = action(OpenThingsDecoder.Decode(payload, PidMap));
                             }
                             catch (OpenThingsException ex)
                             {
-                                Logger.LogError("Decoding OpenThings Message Failed. [{Message}]", ex.Message);
+                                Logger.LogError(ex, "Decoding OpenThings Message Failed.");
                             }
                             catch(Exception ex)
                             {
-                                Logger.LogError("Unhandled exception occurred [{Message}]", ex.Message);
+                                Logger.LogError(ex, "Unhandled exception occurred.");
                             }
 
                             _rfm69.Mode = Mode.Rx;

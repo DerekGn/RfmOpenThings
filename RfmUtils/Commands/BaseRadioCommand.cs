@@ -86,7 +86,7 @@ namespace RfmUtils.Commands
             Rfm69.DioInterrupt -= RfmDeviceDioInterrupt;
         }
 
-        internal void InitaliseRadioOpenThings(string serialPort, int baudRate)
+        internal void InitialiseRadioOpenThings(string serialPort, int baudRate)
         {
             Rfm69.Open(serialPort, baudRate);
             Rfm69.ExecuteReset();
@@ -105,8 +105,8 @@ namespace RfmUtils.Commands
             Rfm69.CrcOn = false;
             Rfm69.CrcAutoClearOff = false;
             Rfm69.AddressFiltering = AddressFilter.None;
-            Rfm69.PayloadLength = 66;
             Rfm69.TxStartCondition = true;
+            Rfm69.FifoThreshold = 0x01;
             Rfm69.OutputPower = OutputPower;
             Rfm69.RssiThreshold = RssiThreshold;
         }

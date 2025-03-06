@@ -46,7 +46,7 @@ namespace RfmUtils.Commands
             {
                 _logger.LogInformation("Waiting for rssi updates. Press ctrl + c to quit");
 
-                InitaliseRadioOpenThings(SerialPort, BaudRate);
+                InitialiseRadioOpenThings(SerialPort, BaudRate);
 
                 AttachEventHandlers(console);
 

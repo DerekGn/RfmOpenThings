@@ -35,7 +35,7 @@ using System.Linq;
 
 namespace RfmUtils.Commands
 {
-    [Command(Description = "Listen for sensor messages")]
+    [Command(Description = "Listen for openthings sensor messages")]
     internal class ListenCommand : BaseRadioRxCommand
     {
         private readonly ISensorStore _deviceStore;
