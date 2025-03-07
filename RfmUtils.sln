@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31105.61
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RfmOpenThings", "RfmOpenThings\RfmOpenThings.csproj", "{A256C18C-6FC7-4675-ADB5-3367A536ED41}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RfmUtils", "RfmUtils\RfmUtils.csproj", "{A256C18C-6FC7-4675-ADB5-3367A536ED41}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,19 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+// Ignore Spelling: Utils Rfm rssi
 
-namespace RfmOpenThings
+namespace RfmUtils.Commands
 {
-    [Verb("ota", HelpText = "Perform an OTA on an OpenThings device")]
-    internal class OtaOptions : SensorOptions
+    internal static class Templates
     {
-        [Option('h', "hexfile", Required = true, HelpText = "The hex file to flash to the device")]
-        public string HexFile { get; set; }
+        public const string BaudRate = "-b|--baudRate";
+        public const string Frequency = "-f|--frequency";
+        public const string HexFile = "-h|--hexFile";
+        public const string Interval = "-i|--interval";
+        public const string OutputPower = "-o|--outputPower";
+        public const string RssiThreshold = "-r|--rssiThreshold";
+        public const string SensorId = "-s|--sensorId";
+        public const string SerialPort = "-p|--serialPort";
     }
 }

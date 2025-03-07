@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2022 Derek Goslin https://github.com/DerekGn
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,19 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+// Ignore Spelling: Utils Rfm
 
-namespace RfmOpenThings
+using System.Globalization;
+
+namespace RfmUtils.Parsers
 {
-    [Verb("listen", HelpText = "Listen for OpenThings messages")]
-    internal class ListenOptions : BaseOptions
+    internal class CustomUIntValueParser : BaseIntValueParser<uint>
     {
+        protected override (bool, uint) ParseFunction(string value, CultureInfo culture, NumberStyles numberStyles)
+        {
+            bool result = uint.TryParse(value, numberStyles, culture, out uint parsedValue);
+
+            return (result, parsedValue);
+        }
     }
 }

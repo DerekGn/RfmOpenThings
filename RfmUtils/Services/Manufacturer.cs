@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,13 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+// Ignore Spelling: Utils Rfm
 
-namespace RfmOpenThings
+namespace RfmUtils.Services
 {
-    [Verb("identify", HelpText = "Send an Identify command to a specific sensor")]
-    internal class IdentifyOptions : SensorOptions
+    public enum Manufacturer
     {
+        Energenie = 0x04,
+        Alt = 0x55
     }
 }

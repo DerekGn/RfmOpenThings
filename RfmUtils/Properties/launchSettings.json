@@ -2,7 +2,7 @@
   "profiles": {
     "RfmOpenThings": {
       "commandName": "Project",
-      "commandLineArgs": "listen -s COM3"
+      "commandLineArgs": "ota flash -h RfmAqs.hex -p COM5"
     }
   }
 }

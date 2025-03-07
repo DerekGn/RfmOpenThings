@@ -1,7 +1,7 @@
 ﻿/*
 * MIT License
 *
-* Copyright (c) 2021 Derek Goslin http://corememorydump.blogspot.ie/
+* Copyright (c) 2023 Derek Goslin http://corememorydump.blogspot.ie/
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,14 @@
 * SOFTWARE.
 */
 
-using CommandLine;
+// Ignore Spelling: Utils Rfm rssi dbm
 
-namespace RfmOpenThings
+namespace RfmUtils.Commands
 {
-    [Verb("interval", HelpText = "Send an update Interval command to a remote sensor")]
-    internal class IntervalOptions : SensorOptions
+    internal enum SignalSource
     {
-        [Option('u', "update", Required = true, HelpText = "The update interval in milliseconds. Can be decimal, octal or hex formatted value.")]
-        public string Interval { get; set; }
+        None = 258,
+        Irq = 0,
+        Stop = 1
     }
 }
